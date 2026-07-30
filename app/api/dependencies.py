@@ -24,10 +24,17 @@ from app.services.user import UserService
 # ---------------------------------------------------------------------------
 
 async def get_vk_user_id(request: Request) -> int:
+    # 1. Для разработки — vk_id в Query
     vk_id_query = request.query_params.get("vk_id")
     if vk_id_query:
         return int(vk_id_query)
 
+    # 2. Для теста — vk_user_id в Query (без подписи!)
+    vk_user_id_query = request.query_params.get("vk_user_id")
+    if vk_user_id_query:
+        return int(vk_user_id_query)
+
+    # 3. Для прода — проверка подписи VK
     params = dict(request.query_params)
     sign = params.pop("sign", None)
 
