@@ -82,7 +82,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
         );
 
         try {
-            await fetch(`/users/me/movies/track?movie_id=${movieId}&is_tracking=${newStatus}`, {
+            await fetch(`/users/me/movies/track?movie_id=${movieId}&is_tracking=${newStatus}&${window.location.search.substring(1)}`, {
                 method: 'PUT',
             });
         } catch (error) {

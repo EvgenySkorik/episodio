@@ -16,8 +16,10 @@ class NotificationService:
 
     async def send_notification(self, user_id: int, name: str, new_episodes: int) -> None:
         """Отправляет уведомление пользователю о новой серии."""
-        await self._vk_client.send_message(
-            user_id,
-            f"Ура! У сериала {name} вышел эпизод № {new_episodes}"
-        )
-        logger.info(f"Уведомление отправлено пользователю {user_id} о сериале '{name}'")
+        user = await self._user_repo.get_by_id(user_id)
+        if user:
+            await self._vk_client.send_message(
+                user.id_vk,
+                f"Ура! У сериала {name} вышел эпизод № {new_episodes}"
+            )
+            logger.info(f"Уведомление отправлено пользователю {user_id} о сериале '{name}'")
