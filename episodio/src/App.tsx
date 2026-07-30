@@ -15,20 +15,23 @@ export const App = () => {
     useEffect(() => {
         const initVK = async () => {
             try {
-                // Проверяем, что мы внутри VK
-                if (window.location.hostname.includes('vk.com') || window.location.hostname.includes('vk')) {
-                    await vkBridge.send('VKWebAppInit');
-                    const user = await vkBridge.send('VKWebAppGetUserInfo');
-                    setVkId(user.id);
-                    console.log('Пользователь:', user);
-                } else {
+                // Инициализируем VK Bridge
+                await vkBridge.send('VKWebAppInit');
 
-                    console.log('Запуск вне VK, используем заглушку');
-                    setVkId(10);
-                }
+                // Получаем данные пользователя
+                const user = await vkBridge.send('VKWebAppGetUserInfo');
+                setVkId(user.id);
+                console.log('Пользователь VK:', user);
             } catch (error) {
                 console.error('Ошибка VK Bridge:', error);
-                setVkId(10);
+                // Фолбэк — берём из URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const vkUserId = urlParams.get('vk_user_id');
+                if (vkUserId) {
+                    setVkId(Number(vkUserId));
+                } else {
+                    setVkId(10); // Заглушка для браузера
+                }
             }
         };
         initVK();

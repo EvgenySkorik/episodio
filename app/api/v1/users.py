@@ -20,7 +20,7 @@ async def get_me(
 
 ):
     print(vk_id)
-    return await service.get_user_by_vk_id(vk_id)
+    return await service.get_or_create_user(vk_id)
 
 
 @users_rout.get("/me/movies", summary='Получить фильмы пользователя по VK ID', response_model=list[MovieWithUserRatingResponse])

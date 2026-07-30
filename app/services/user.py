@@ -48,6 +48,20 @@ class UserService:
             movie_collections=[],
         )
 
+    async def get_or_create_user(self, vk_id: int) -> UserResponse:
+        """Получить или создать пользователя по VK ID."""
+        user_orm = await self._user_repo.get_by_vk_id(vk_id)
+        if user_orm:
+            return UserResponse.model_validate(user_orm, from_attributes=True)
+
+        user_data = {
+            "id_vk": vk_id,
+            "first_name": f"User_{vk_id}",
+        }
+        user_orm = await self._user_repo.create(user_data)
+        logger.info(f"Создан новый пользователь с VK ID {vk_id}")
+        return UserResponse.model_validate(user_orm, from_attributes=True)
+
     async def update_user(self, user_id: int, user: UserUpdate) -> UserResponse:
         """"Обновляет Пользователя по схеме UserUpdate, отдает схему"""
         user_orm = await self._user_repo.update(user_id, user.model_dump(exclude_unset=True))
