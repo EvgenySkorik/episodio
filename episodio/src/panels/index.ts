@@ -1,4 +1,3 @@
 export { Persik } from './Persik';
-export { Home } from './Home';
-
-export type { HomeProps } from './Home';
+export { default as Home } from './Home';
+export { default as MovieDetail } from './MovieDetail';

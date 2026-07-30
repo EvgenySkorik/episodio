@@ -1,7 +1,6 @@
 import {useState, useEffect} from 'react';
-import {Panel, PanelHeader, Group, Cell, Button, Input, Box, Title, Spinner, Card, Slider} from '@vkontakte/vkui';
+import {Panel, PanelHeader, Group, Cell, Button, Input, Box, Title, Card, Slider} from '@vkontakte/vkui';
 import {getUserMovies, searchMovies, addMovieToCollection} from '../utils/api';
-import {API_URL} from '../utils/api';
 
 interface HomeProps {
     id: string;
@@ -10,11 +9,12 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
-    const [movies, setMovies] = useState([]);
+    const [movies, setMovies] = useState<any[]>([]);
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const [searchResults, setSearchResults] = useState([]);
     const [showSearch, setShowSearch] = useState(false);
+
 
     useEffect(() => {
         const fetchMovies = async () => {
@@ -62,7 +62,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
 
     const rateMovie = async (movieId: number, rating: number) => {
         try {
-            await fetch(`${API_URL}/users/me/movies/rating?movie_id=${movieId}&rating=${rating}`, {
+            await fetch(`/users/me/movies/rating?movie_id=${movieId}&rating=${rating}&${window.location.search.substring(1)}`, {
                 method: 'PUT',
             });
             const updated = await getUserMovies();
@@ -82,7 +82,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
         );
 
         try {
-            await fetch(`${API_URL}/users/me/movies/track?movie_id=${movieId}&is_tracking=${newStatus}`, {
+            await fetch(`/users/me/movies/track?movie_id=${movieId}&is_tracking=${newStatus}`, {
                 method: 'PUT',
             });
         } catch (error) {
@@ -136,7 +136,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                                                 style={{objectFit: 'cover', borderRadius: 4}}
                                             />
                                         }
-                                        description={`${movie.year} • ${movie.is_series ? 'Сериал' : 'Фильм'} • ⭐ ${movie.rating_kp ?? '—'}`}
+                                        subtitle={`${movie.year} • ${movie.is_series ? 'Сериал' : 'Фильм'} • ⭐ ${movie.rating_kp ?? '—'}`}
                                         after={
                                             <Button
                                                 size="s"
@@ -185,7 +185,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                                                 style={{objectFit: 'cover', borderRadius: 4}}
                                             />
                                         }
-                                        description={`${movie.year} • ${movie.is_series ? 'Сериал' : 'Фильм'} • ⭐ ${movie.rating_kp ?? '—'}`}
+                                        subtitle={`${movie.year} • ${movie.is_series ? 'Сериал' : 'Фильм'} • ⭐ ${movie.rating_kp ?? '—'}`}
                                         onClick={() => openMovie(movie.id, true)}
                                     >
                                         {movie.name}
@@ -197,14 +197,11 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                                             max={10}
                                             step={0.5}
                                             value={movie.user_rating || 0}
-                                            onChange={(value) => {
+                                            onChange={(value: number) => {
                                                 const updated = movies.map((m: any) =>
                                                     m.id === movie.id ? {...m, user_rating: value} : m
                                                 );
                                                 setMovies(updated);
-                                            }}
-                                            onEnd={(value) => {
-                                                console.log('📤 Отправляем рейтинг:', movie.id, value);
                                                 rateMovie(movie.id, value);
                                             }}
                                         />
