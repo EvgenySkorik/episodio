@@ -60,7 +60,16 @@ class UserService:
         }
         user_orm = await self._user_repo.create(user_data)
         logger.info(f"Создан новый пользователь с VK ID {vk_id}")
-        return UserResponse.model_validate(user_orm, from_attributes=True)
+        return UserResponse(
+            id=user_orm.id,
+            id_vk=user_orm.id_vk,
+            first_name=user_orm.first_name,
+            last_name=user_orm.last_name,
+            telephone=user_orm.telephone,
+            avatar=user_orm.avatar,
+            created_at=user_orm.created_at,
+            movie_collections=[],
+        )
 
     async def update_user(self, user_id: int, user: UserUpdate) -> UserResponse:
         """"Обновляет Пользователя по схеме UserUpdate, отдает схему"""
