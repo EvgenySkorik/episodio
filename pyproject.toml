@@ -12,6 +12,7 @@ dependencies = [
     "fastapi>=0.135.3",
     "fastvk>=0.0.17",
     "httpx>=0.28.1",
+    "prometheus-fastapi-instrumentator>=8.1.0",
     "psycopg2-binary>=2.9.12",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",

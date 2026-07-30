@@ -1,5 +1,6 @@
 from typing import AsyncIterator
 
+from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
@@ -28,6 +29,9 @@ app = FastAPI(
     version=settings.version,
     lifespan=lifespan,
 )
+
+instrumentator = Instrumentator()
+instrumentator.instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,
