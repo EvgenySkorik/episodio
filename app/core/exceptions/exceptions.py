@@ -23,3 +23,15 @@ class NotificationError(AppError):
 class SeriesUpdateError(AppError):
     """Ошибка при проверке обновлений сериала."""
     pass
+
+class SecurityError(Exception):
+    """Базовая ошибка безопасности."""
+    pass
+
+class TokenExpiredError(SecurityError):
+    """Токен истёк."""
+    pass
+
+class InvalidTokenError(SecurityError):
+    """Токен невалиден."""
+    pass

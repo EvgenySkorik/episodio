@@ -2,10 +2,12 @@ from typing import AsyncIterator
 
 from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi import FastAPI
+from hawk_python_sdk.modules.fastapi import HawkFastapi
 from contextlib import asynccontextmanager
 
 from starlette.middleware.cors import CORSMiddleware
 
+from app.api.v1.auth import auth_rout
 from app.api.v1.movies import movies_rout
 from app.api.v1.users import users_rout
 from app.core.config import settings
@@ -33,6 +35,11 @@ app = FastAPI(
 instrumentator = Instrumentator()
 instrumentator.instrument(app).expose(app)
 
+hawk = HawkFastapi({
+    'app_instance': app,
+    'token': settings.hawk_secret_token,
+})
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -45,12 +52,13 @@ register_exception_handlers(app)
 
 app.include_router(movies_rout)
 app.include_router(users_rout)
+app.include_router(auth_rout)
 
 @app.get("/")
 async def root():
     return {"status": "ok"}
 
+@app.get("/trigger-error")
+async def trigger_error():
+    raise Exception("Тестовая ошибка для Hawk!")
 
-
-# if __name__ == "__main__":
-#     uvicorn.run(app, host="0.0.0.0", port=8000)

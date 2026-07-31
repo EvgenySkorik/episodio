@@ -33,6 +33,7 @@ class KinopoiskSettings(BaseSettings):
 
 class VkSettings(BaseSettings):
     token: str = "default"
+    secret_key: str = ""
     api_url: str = "https://api.vk.com/method/"
     api_version: str = "5.199"
 
@@ -66,6 +67,8 @@ class AppSettings(BaseSettings):
     vk: VkSettings = VkSettings()
     celery: CelerySettings = CelerySettings()
 
+    secret_jwt_key: str = ""
+    hawk_secret_token: str = ""
     title: str = "Kino Movie API"
     description: str = "API для поиска и хранения фильмов (БД + Кинопоиск)"
     version: str = "2.0.0"

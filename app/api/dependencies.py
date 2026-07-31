@@ -3,6 +3,7 @@ import hmac
 from typing import Annotated, TypeAlias
 
 from fastapi import Depends, Request, HTTPException
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.clients.kp_client import KinopoiskClient
@@ -10,6 +11,7 @@ from app.clients.vk_client import VkClient
 from app.core.config import settings
 from app.db.database import get_db
 from app.infrastructure.http_client import HTTPClient
+from app.infrastructure.security import get_current_user_impl, verify_vk_sign
 from app.repositories.movie_rep import MovieRepository
 from app.repositories.user_rep import UserRepository
 
@@ -22,36 +24,15 @@ from app.services.user import UserService
 # ---------------------------------------------------------------------------
 # --------------------------VK MiniApp проверка------------------------------
 # ---------------------------------------------------------------------------
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/vk")
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> int:
+    return get_current_user_impl(token)
+
+
 
 async def get_vk_user_id(request: Request) -> int:
-    # 1. Для разработки — vk_id в Query
-    vk_id_query = request.query_params.get("vk_id")
-    if vk_id_query:
-        return int(vk_id_query)
-
-    # 2. Для теста — vk_user_id в Query (без подписи!)
-    vk_user_id_query = request.query_params.get("vk_user_id")
-    if vk_user_id_query:
-        return int(vk_user_id_query)
-
-    # 3. Для прода — проверка подписи VK
-    params = dict(request.query_params)
-    sign = params.pop("sign", None)
-
-    if sign:
-        secret = settings.vk.token
-        sorted_params = sorted(params.items())
-        check_string = "&".join(f"{k}={v}" for k, v in sorted_params)
-        expected = hmac.new(secret.encode(), check_string.encode(), hashlib.sha256).hexdigest()
-
-        if not hmac.compare_digest(sign, expected):
-            raise HTTPException(status_code=403, detail="Invalid VK sign")
-
-        vk_user_id = params.get("vk_user_id")
-        if vk_user_id:
-            return int(vk_user_id)
-
-    raise HTTPException(status_code=401, detail="Missing vk_user_id")
+    return verify_vk_sign(dict(request.query_params), settings.vk.secret_key)
 
 # ---------------------------------------------------------------------------
 # -----------------------------Репозитории-----------------------------------
@@ -127,3 +108,5 @@ async def get_user_service(
 ServiceMovieDep: TypeAlias = Annotated[MovieService, Depends(get_movie_service)]
 ServiceUserDep: TypeAlias = Annotated[UserService, Depends(get_user_service)]
 VkUserIdDep: TypeAlias = Annotated[int, Depends(get_vk_user_id)]
+CurrentUserVkIdDep: TypeAlias = Annotated[int, Depends(get_current_user)]
+

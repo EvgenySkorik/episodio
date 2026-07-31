@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Query
 
 from app.schemas.movie_schemas import MovieWithUserRatingResponse
-from app.api.dependencies import ServiceUserDep, VkUserIdDep
+from app.api.dependencies import ServiceUserDep, CurrentUserVkIdDep
 from app.schemas.user_schemas import UserResponse, UserCreate, UserUpdate
 
 users_rout = APIRouter(prefix="/users", tags=["users"])
@@ -16,16 +16,15 @@ async def create_user(
 @users_rout.get("/me", summary='Получить текущего пользователя по VK ID', response_model=UserResponse)
 async def get_me(
     service: ServiceUserDep,
-    vk_id: VkUserIdDep,
+    vk_id: CurrentUserVkIdDep,
 
 ):
-    print(vk_id)
     return await service.get_or_create_user(vk_id)
 
 
 @users_rout.get("/me/movies", summary='Получить фильмы пользователя по VK ID', response_model=list[MovieWithUserRatingResponse])
 async def get_my_movies(
-    vk_id: VkUserIdDep,
+    vk_id: CurrentUserVkIdDep,
     service: ServiceUserDep,
 ):
     return await service.get_user_movies_with_rating(vk_id)
@@ -34,7 +33,7 @@ async def get_my_movies(
 @users_rout.post("/me/movies", summary='Добавить фильм в коллекцию', status_code=status.HTTP_201_CREATED)
 async def add_movie_to_collection(
     service: ServiceUserDep,
-    vk_id: VkUserIdDep,
+    vk_id: CurrentUserVkIdDep,
     movie_id: int = Query(...),
 
 ):
@@ -42,7 +41,7 @@ async def add_movie_to_collection(
 
 @users_rout.delete("/me/movies", summary='Удалить фильм из коллекции')
 async def delete_movie_from_collection(
-    vk_id: VkUserIdDep,
+    vk_id: CurrentUserVkIdDep,
     movie_id: int,
     service: ServiceUserDep,
 ):
@@ -50,7 +49,7 @@ async def delete_movie_from_collection(
 
 @users_rout.put("/me/movies/rating", summary='Оценить фильм')
 async def rate_movie(
-    vk_id: VkUserIdDep,
+    vk_id: CurrentUserVkIdDep,
     movie_id: int,
     rating: float,
     service: ServiceUserDep,
@@ -59,7 +58,7 @@ async def rate_movie(
 
 @users_rout.put("/me/movies/track")
 async def toggle_tracking(
-    vk_id: VkUserIdDep,
+    vk_id: CurrentUserVkIdDep,
     service: ServiceUserDep,
     movie_id: int = Query(...),
     is_tracking: bool = Query(...),

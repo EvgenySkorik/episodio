@@ -3,7 +3,8 @@ from fastapi.responses import JSONResponse
 from httpx import HTTPStatusError
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.exceptions.exceptions import UserNotFoundError, MovieNotFoundError, KinopoiskAPIError, AppError
+from app.core.exceptions.exceptions import UserNotFoundError, MovieNotFoundError, KinopoiskAPIError, AppError, \
+    SecurityError, TokenExpiredError, InvalidTokenError
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -44,6 +45,21 @@ def register_exception_handlers(app: FastAPI):
             status_code=exc.response.status_code,
             content={"detail": "Ошибка внешнего сервиса"}
         )
+
+    @app.exception_handler(SecurityError)
+    async def security_error_handler(request: Request, exc: SecurityError):
+        logger.error(f"Security error: {exc}")
+        return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+    @app.exception_handler(TokenExpiredError)
+    async def token_expired_handler(request: Request, exc: TokenExpiredError):
+        logger.warning(f"Token expired: {exc}")
+        return JSONResponse(status_code=401, content={"detail": "Токен истёк"})
+
+    @app.exception_handler(InvalidTokenError)
+    async def invalid_token_handler(request: Request, exc: InvalidTokenError):
+        logger.warning(f"Invalid token: {exc}")
+        return JSONResponse(status_code=401, content={"detail": "Токен невалиден"})
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
