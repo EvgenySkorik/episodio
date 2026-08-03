@@ -26,23 +26,18 @@ def verify_vk_sign(params: dict, secret: str) -> int:
     """
     vk_params = {k: v for k, v in params.items() if k.startswith("vk_")}
 
-    # Сортируем по ключам
     sorted_params = OrderedDict(sorted(vk_params.items()))
 
-    # Формируем строку запроса
     query_string = urlencode(sorted_params, doseq=True)
 
-    # Вычисляем HMAC-SHA256
     hmac_hash = hmac.new(
         secret.encode(),
         query_string.encode(),
         hashlib.sha256
     ).digest()
 
-    # Base64 URL-safe без padding
     expected_sign = base64.urlsafe_b64encode(hmac_hash).decode().rstrip('=')
 
-    # Сравниваем
     sign = params.get("sign")
     if not sign:
         raise SecurityError("Missing sign")
