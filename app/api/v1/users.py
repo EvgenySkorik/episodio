@@ -16,7 +16,7 @@ async def create_user(
 @users_rout.get("/me", summary='Получить текущего пользователя по VK ID', response_model=UserResponse)
 async def get_me(
     service: ServiceUserDep,
-    vk_id: VkUserIdDep,
+    vk_id: CurrentUserVkIdDep,
 
 ):
     return await service.get_or_create_user(vk_id)
@@ -24,7 +24,7 @@ async def get_me(
 
 @users_rout.get("/me/movies", summary='Получить фильмы пользователя по VK ID', response_model=list[MovieWithUserRatingResponse])
 async def get_my_movies(
-    vk_id: VkUserIdDep,
+    vk_id: CurrentUserVkIdDep,
     service: ServiceUserDep,
 ):
     return await service.get_user_movies_with_rating(vk_id)
