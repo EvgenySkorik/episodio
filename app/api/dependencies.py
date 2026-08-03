@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.clients.kp_client import KinopoiskClient
 from app.clients.vk_client import VkClient
 from app.core.config import settings
+from app.core.exceptions.exceptions import SecurityError
 from app.db.database import get_db
 from app.infrastructure.http_client import HTTPClient
 from app.infrastructure.security import get_current_user_impl, verify_vk_sign
@@ -32,7 +33,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> int:
 
 
 async def get_vk_user_id(request: Request) -> int:
-    return verify_vk_sign(dict(request.query_params), settings.vk.secret_key)
+    try:
+        return verify_vk_sign(dict(request.query_params), settings.vk.secret_key)
+    except SecurityError as e:
+        raise HTTPException(status_code=403, detail=str(e))
 
 # ---------------------------------------------------------------------------
 # -----------------------------Репозитории-----------------------------------

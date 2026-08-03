@@ -11,42 +11,51 @@ export const App = () => {
     const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
-    const initVK = async () => {
-        const setFallbackVkId = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const vkUserId = urlParams.get('vk_user_id');
-            setVkId(vkUserId ? Number(vkUserId) : 10);
-        };
+        const initVK = async () => {
+            const setFallbackVkId = () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const vkUserId = urlParams.get('vk_user_id');
+                setVkId(vkUserId ? Number(vkUserId) : 10);
+            };
 
-        try {
-            const timeout = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('VK Bridge timeout')), 2000)
-            );
-            await Promise.race([vkBridge.send('VKWebAppInit'), timeout]);
-            const user = await vkBridge.send('VKWebAppGetUserInfo');
-            setVkId(user.id);
-        } catch (error) {
-            console.log('VK Bridge not available, using fallback');
-            setFallbackVkId();
-        }
-
-        // 🔧 ПОЛУЧАЕМ JWT ПОСЛЕ ПОЛУЧЕНИЯ vkId
-        if (!localStorage.getItem('jwt')) {
             try {
-                const res = await fetch('/auth/vk?' + window.location.search.substring(1), {
-                    method: 'POST'
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    localStorage.setItem('jwt', data.access_token);
-                }
+                const timeout = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('VK Bridge timeout')), 2000)
+                );
+                await Promise.race([vkBridge.send('VKWebAppInit'), timeout]);
+                const user = await vkBridge.send('VKWebAppGetUserInfo');
+                setVkId(user.id);
             } catch (error) {
-                console.error('Ошибка получения JWT:', error);
+                console.log('VK Bridge not available, using fallback');
+                setFallbackVkId();
             }
-        }
-    };
-    initVK();
-}, []);
+
+            // 🔧 ПОЛУЧАЕМ JWT ПОСЛЕ ПОЛУЧЕНИЯ vkId
+            if (!localStorage.getItem('jwt')) {
+                try {
+                    let data;
+                    if (window.location.hostname.includes('vk.com') || window.location.hostname.includes('vk.ru')) {
+                        data = await vkBridge.send('VKWebAppCallAPIMethod', {
+                            method: 'POST',
+                            params: {
+                                v: '5.199',
+                                access_token: 'vk1.a...',
+                            }
+                        });
+                    } else {
+                        const res = await fetch('/auth/vk?' + window.location.search.substring(1), {method: 'POST'});
+                        data = await res.json();
+                    }
+                    if (data.access_token) {
+                        localStorage.setItem('jwt', data.access_token);
+                    }
+                } catch (error) {
+                    console.error('Ошибка получения JWT:', error);
+                }
+            }
+        };
+        initVK();
+    }, []);
 
     const openMovie = (id: number, inCollection: boolean) => {
         setMovieId(String(id));
@@ -57,7 +66,8 @@ export const App = () => {
     const goBack = () => setActivePanel('home');
     const refreshHome = () => setRefreshKey(prev => prev + 1);
 
-    if (!vkId) return <div className="flex items-center justify-center h-screen bg-gray-950 text-white">Загрузка...</div>;
+    if (!vkId) return <div
+        className="flex items-center justify-center h-screen bg-gray-950 text-white">Загрузка...</div>;
 
     if (activePanel === 'home') {
         return (
