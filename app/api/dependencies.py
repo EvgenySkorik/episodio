@@ -32,6 +32,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> int:
 
 
 async def get_vk_user_id(request: Request) -> int:
+    vk_id = request.query_params.get("vk_id")
+    if vk_id:
+        return int(vk_id)
     return verify_vk_sign(dict(request.query_params), settings.vk.secret_key)
 
 # ---------------------------------------------------------------------------

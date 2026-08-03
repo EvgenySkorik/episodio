@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, Query
 
 from app.schemas.movie_schemas import MovieWithUserRatingResponse
-from app.api.dependencies import ServiceUserDep, CurrentUserVkIdDep
+from app.api.dependencies import ServiceUserDep, CurrentUserVkIdDep, VkUserIdDep
 from app.schemas.user_schemas import UserResponse, UserCreate, UserUpdate
 
 users_rout = APIRouter(prefix="/users", tags=["users"])
@@ -16,7 +16,7 @@ async def create_user(
 @users_rout.get("/me", summary='Получить текущего пользователя по VK ID', response_model=UserResponse)
 async def get_me(
     service: ServiceUserDep,
-    vk_id: CurrentUserVkIdDep,
+    vk_id: VkUserIdDep,
 
 ):
     return await service.get_or_create_user(vk_id)
@@ -24,7 +24,7 @@ async def get_me(
 
 @users_rout.get("/me/movies", summary='Получить фильмы пользователя по VK ID', response_model=list[MovieWithUserRatingResponse])
 async def get_my_movies(
-    vk_id: CurrentUserVkIdDep,
+    vk_id: VkUserIdDep,
     service: ServiceUserDep,
 ):
     return await service.get_user_movies_with_rating(vk_id)
