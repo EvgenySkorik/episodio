@@ -28,6 +28,7 @@ class MovieResponse(BaseModel):
 class MovieWithUserRatingResponse(MovieResponse):
     user_rating: float | None = 0
     is_watched: bool | None = False
+    is_tracking: bool | None = False
 
 
 class MovieCreate(BaseModel):

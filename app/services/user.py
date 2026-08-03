@@ -116,6 +116,7 @@ class UserService:
                 **movie_resp.model_dump(exclude_unset=True),
                 user_rating=user_movie.user_rating or 0,
                 is_watched=user_movie.is_watched or False,
+                is_tracking=user_movie.is_tracking or False,
             )
             movies.append(mov_with_rait)
             logger.info(f"Получен список фильмов пользователя по vk_id")
