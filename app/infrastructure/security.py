@@ -1,6 +1,9 @@
+import base64
 import hashlib
 import hmac
+from collections import OrderedDict
 from datetime import datetime, timezone, timedelta
+from urllib.parse import urlencode
 
 import jwt
 
@@ -21,30 +24,33 @@ def verify_vk_sign(params: dict, secret: str) -> int:
     Returns:
         vk_user_id: int - если подпись верна
     """
+    vk_params = {k: v for k, v in params.items() if k.startswith("vk_")}
+
+    # Сортируем по ключам
+    sorted_params = OrderedDict(sorted(vk_params.items()))
+
+    # Формируем строку запроса
+    query_string = urlencode(sorted_params, doseq=True)
+
+    # Вычисляем HMAC-SHA256
+    hmac_hash = hmac.new(
+        secret.encode(),
+        query_string.encode(),
+        hashlib.sha256
+    ).digest()
+
+    # Base64 URL-safe без padding
+    expected_sign = base64.urlsafe_b64encode(hmac_hash).decode().rstrip('=')
+
+    # Сравниваем
     sign = params.get("sign")
     if not sign:
-        logger.warning("Ошибка получения 'sign' от VK Mini App.")
+        raise SecurityError("Missing sign")
+
+    if not hmac.compare_digest(sign, expected_sign):
         raise SecurityError("Invalid VK sign")
 
-    params.pop("sign")
-
-    sorted_params = sorted(params.items())
-    check_string = "&".join(f"{k}={v}" for k, v in sorted_params)
-
-    expected = hmac.new(
-        secret.encode(),
-        check_string.encode(),
-        hashlib.sha256,
-    ).hexdigest()
-
-    if not hmac.compare_digest(sign, expected):
-        raise SecurityError("secrets not valid")
-
-    vk_user_id = params.get("vk_user_id")
-    if not vk_user_id:
-        raise SecurityError("Missing vk_user_id")
-
-    return int(vk_user_id)
+    return int(params["vk_user_id"])
 
 
 def create_jwt(vk_id: int) -> str:
