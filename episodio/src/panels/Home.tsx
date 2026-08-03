@@ -85,8 +85,9 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
             await fetch(`/users/me/movies/track?movie_id=${movieId}&is_tracking=${newStatus}&${window.location.search.substring(1)}`, {
                 method: 'PUT',
             });
+            const updated = await getUserMovies();
+            setMovies(updated);
         } catch (error) {
-
             setMovies((prev: any[]) =>
                 prev.map((m) =>
                     m.id === movieId ? {...m, is_tracking: currentStatus} : m
