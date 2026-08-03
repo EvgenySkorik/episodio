@@ -33,20 +33,9 @@ export const App = () => {
             // 🔧 ПОЛУЧАЕМ JWT ПОСЛЕ ПОЛУЧЕНИЯ vkId
             if (!localStorage.getItem('jwt')) {
                 try {
-                    let data;
-                    if (window.location.hostname.includes('vk.com') || window.location.hostname.includes('vk.ru')) {
-                        data = await vkBridge.send('VKWebAppCallAPIMethod', {
-                            method: 'POST',
-                            params: {
-                                v: '5.199',
-                                access_token: 'vk1.a...',
-                            }
-                        });
-                    } else {
-                        const res = await fetch('/auth/vk?' + window.location.search.substring(1), {method: 'POST'});
-                        data = await res.json();
-                    }
-                    if (data.access_token) {
+                    const res = await fetch('/auth/vk?' + window.location.search.substring(1), {method: 'POST'});
+                    if (res.ok) {
+                        const data = await res.json();
                         localStorage.setItem('jwt', data.access_token);
                     }
                 } catch (error) {

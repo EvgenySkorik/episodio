@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Login...</title></head>
+<body>
+<script>
+fetch('/auth/vk?' + window.location.search.substring(1), {method: 'POST'})
+  .then(r => r.json())
+  .then(data => {
+      localStorage.setItem('jwt', data.access_token);
+      window.location.href = '/';
+  })
+  .catch(() => window.location.href = '/');
+</script>
+</body>
+</html>

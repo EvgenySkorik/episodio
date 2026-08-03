@@ -5,6 +5,15 @@ const getHeaders = () => {
     return token ? { 'Authorization': `Bearer ${token}` } : {};
 };
 
+const handleResponse = async (res: Response) => {
+    if (res.status === 401) {
+        localStorage.removeItem('jwt');
+        window.location.reload(); // Перезагрузка вызовет /auth/vk заново!
+    }
+    if (!res.ok) throw new Error('Ошибка');
+    return res.json();
+};
+
 export const searchMovies = async (query: string) => {
     const res = await fetch(`${API_URL}/movies/search?q=${encodeURIComponent(query)}`);
     if (!res.ok) throw new Error('Ошибка поиска');
@@ -14,7 +23,7 @@ export const searchMovies = async (query: string) => {
 export const getUserMovies = async () => {
     const res = await fetch(`${API_URL}/users/me/movies`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Ошибка загрузки коллекции');
-    return res.json();
+    return handleResponse(res);
 };
 
 export const addMovieToCollection = async (movieId: number) => {
@@ -23,5 +32,5 @@ export const addMovieToCollection = async (movieId: number) => {
         headers: getHeaders(),
     });
     if (!res.ok) throw new Error('Ошибка добавления');
-    return res.json();
+    return handleResponse(res);
 };
