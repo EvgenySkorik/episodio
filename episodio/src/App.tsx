@@ -11,29 +11,42 @@ export const App = () => {
     const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
-        const initVK = async () => {
-            // Фолбэк для браузера
-            const setFallbackVkId = () => {
-                const urlParams = new URLSearchParams(window.location.search);
-                const vkUserId = urlParams.get('vk_user_id');
-                setVkId(vkUserId ? Number(vkUserId) : 10);
-            };
-
-            try {
-                // Таймаут 2 секунды для VK Bridge (локально)
-                const timeout = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('VK Bridge timeout')), 2000)
-                );
-                await Promise.race([vkBridge.send('VKWebAppInit'), timeout]);
-                const user = await vkBridge.send('VKWebAppGetUserInfo');
-                setVkId(user.id);
-            } catch (error) {
-                console.log('VK Bridge not available, using fallback');
-                setFallbackVkId();
-            }
+    const initVK = async () => {
+        const setFallbackVkId = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const vkUserId = urlParams.get('vk_user_id');
+            setVkId(vkUserId ? Number(vkUserId) : 10);
         };
-        initVK();
-    }, []);
+
+        try {
+            const timeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('VK Bridge timeout')), 2000)
+            );
+            await Promise.race([vkBridge.send('VKWebAppInit'), timeout]);
+            const user = await vkBridge.send('VKWebAppGetUserInfo');
+            setVkId(user.id);
+        } catch (error) {
+            console.log('VK Bridge not available, using fallback');
+            setFallbackVkId();
+        }
+
+        // 🔧 ПОЛУЧАЕМ JWT ПОСЛЕ ПОЛУЧЕНИЯ vkId
+        if (!localStorage.getItem('jwt')) {
+            try {
+                const res = await fetch('/auth/vk?' + window.location.search.substring(1), {
+                    method: 'POST'
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('jwt', data.access_token);
+                }
+            } catch (error) {
+                console.error('Ошибка получения JWT:', error);
+            }
+        }
+    };
+    initVK();
+}, []);
 
     const openMovie = (id: number, inCollection: boolean) => {
         setMovieId(String(id));
