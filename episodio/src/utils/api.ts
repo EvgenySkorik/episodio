@@ -27,7 +27,7 @@ export const getUserMovies = async () => {
 };
 
 export const addMovieToCollection = async (movieId: number) => {
-    const res = await fetch(`${API_URL}/users/me/movies?movie_id=${movieId}`, {
+    const res = await fetch(`${API_URL}/users/me/movies/${movieId}`, {
         method: 'POST',
         headers: getHeaders(),
     });

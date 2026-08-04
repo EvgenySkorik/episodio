@@ -34,22 +34,31 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movieId, goBack, isInCollecti
   const handleDelete = async () => {
     if (!window.confirm('Удалить фильм из коллекции?')) return;
     const token = localStorage.getItem('jwt');
-    try {
-      const res = await fetch(`/users/me/movies?movie_id=${movieId}`, {
-        method: 'DELETE',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      });
-      if (res.ok) {
-        alert('Фильм удалён из коллекции');
-        if (onDelete) onDelete();
-        goBack();
-      } else {
-        alert('Ошибка удаления');
-      }
-    } catch (error) {
-      console.error('Ошибка удаления:', error);
+    if (!token) {
+        alert('Вы не авторизованы');
+        return;
     }
-  };
+    try {
+        const res = await fetch(`/users/me/movies/${movieId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+        });
+        if (res.ok) {
+            alert('Фильм удалён из коллекции');
+            if (onDelete) onDelete();
+            goBack();
+        } else {
+            const error = await res.json();
+            alert(error.detail || 'Ошибка удаления');
+        }
+    } catch (error) {
+        console.error('Ошибка удаления:', error);
+        alert('Ошибка соединения с сервером');
+    }
+};
 
   if (loading) return <div className="flex items-center justify-center h-screen bg-gray-950 text-white">Загрузка...</div>;
   if (!movie) return <div className="flex items-center justify-center h-screen bg-gray-950 text-white">Фильм не найден</div>;

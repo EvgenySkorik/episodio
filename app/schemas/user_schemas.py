@@ -16,6 +16,9 @@ class UserResponse(BaseModel):
     movie_collections: list[MovieResponse] = []
 
 
+class UserCreateId(BaseModel):
+    id_vk: int
+
 class UserCreate(BaseModel):
     id_vk: int
     first_name: str

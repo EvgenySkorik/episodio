@@ -19,6 +19,14 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [showSearch, setShowSearch] = useState(false);
     const token = localStorage.getItem('jwt');
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    useEffect(() => {
+        if (toast) {
+            const timer = setTimeout(() => setToast(null), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [toast]);
 
     useEffect(() => {
         const fetchMovies = async () => {
@@ -62,28 +70,76 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
 
     const rateMovie = async (movieId: number, rating: number) => {
         try {
-            await fetch(`/users/me/movies/rating?movie_id=${movieId}&rating=${rating}&${window.location.search.substring(1)}`, {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                console.error('Нет токена авторизации');
+                return;
+            }
+
+            const response = await fetch(`/users/me/movies/${movieId}/rating`, {
                 method: 'PUT',
-                headers: token ? {'Authorization': `Bearer ${token}`} : {},
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({rating})  // ✅ Правильно!
             });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Ошибка сохранения рейтинга');
+            }
+
             const updated = await getUserMovies();
             setMovies(updated);
+
         } catch (error) {
             console.error('Ошибка сохранения рейтинга:', error);
+            alert('Не удалось сохранить рейтинг');
         }
     };
 
     const toggleTracking = async (movieId: number, currentStatus: boolean) => {
         const newStatus = !currentStatus;
-        setMovies((prev) => prev.map((m) => m.id === movieId ? {...m, is_tracking: newStatus} : m));
+        const token = localStorage.getItem('jwt');
+
+        if (!token) {
+            console.error('Нет токена авторизации');
+            return;
+        }
+
+        setMovies((prev) =>
+            prev.map((m) => m.id === movieId ? {...m, is_tracking: newStatus} : m)
+        );
+
         try {
-            await fetch(`/users/me/movies/track?movie_id=${movieId}&is_tracking=${newStatus}&${window.location.search.substring(1)}`, {
+            const response = await fetch(`/users/me/movies/${movieId}/track`, {
                 method: 'PUT',
-                headers: token ? {'Authorization': `Bearer ${token}`} : {},
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({is_tracking: newStatus})
             });
+
+            if (!response.ok) {
+                throw new Error('Ошибка обновления статуса');
+            }
+
+            setToast({
+                message: newStatus ? '✅ Сериал отслеживается' : '❌ Сериал не отслеживается',
+                type: newStatus ? 'success' : 'error'
+            });
+
         } catch (error) {
-            setMovies((prev) => prev.map((m) => m.id === movieId ? {...m, is_tracking: currentStatus} : m));
+            setMovies((prev) =>
+                prev.map((m) => m.id === movieId ? {...m, is_tracking: currentStatus} : m)
+            );
             console.error('Ошибка обновления статуса:', error);
+            setToast({
+                message: '❌ Не удалось обновить статус',
+                type: 'error'
+            });
         }
     };
 
@@ -91,20 +147,42 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
 
     return (
         <div className="min-h-screen bg-gray-950 text-white p-4 space-y-6">
+            {toast && (
+                <div
+                    className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-white text-sm font-medium transition-all duration-300 ${
+                        toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+                    }`}>
+                    {toast.message}
+                </div>
+            )}
+
             <div className="flex items-center gap-3">
                 <Tv className="w-8 h-8 text-red-600"/>
                 <h1 className="text-2xl font-bold tracking-tight">Episodio</h1>
             </div>
+
             <div className="flex gap-2">
-                <Input type="text" placeholder="Найти фильм..." value={query} onChange={(e) => setQuery(e.target.value)}
-                       onKeyDown={(e) => e.key === 'Enter' && handleSearch()} className="flex-1"/>
-                <Button onClick={handleSearch} variant="secondary"><Search className="w-4 h-4"/></Button>
+                <Input
+                    type="text"
+                    placeholder="Найти фильм..."
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    className="flex-1"
+                />
+                <Button onClick={handleSearch} variant="secondary">
+                    <Search className="w-4 h-4"/>
+                </Button>
             </div>
+
             {showSearch && (
                 <div className="space-y-4">
-                    <h2 className="text-lg font-semibold flex items-center gap-2"><Search
-                        className="w-5 h-5"/> Результаты</h2>
-                    {searchResults.length === 0 ? <p className="text-gray-500">Ничего не найдено</p> : (
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <Search className="w-5 h-5"/> Результаты
+                    </h2>
+                    {searchResults.length === 0 ? (
+                        <p className="text-gray-500">Ничего не найдено</p>
+                    ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {searchResults.map((movie: any) => (
                                 <Card key={movie.id}
@@ -119,7 +197,9 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                                         <Button size="sm" variant="outline" className="w-full" onClick={(e) => {
                                             e.stopPropagation();
                                             handleAddToCollection(movie.id);
-                                        }}><Plus className="w-4 h-4"/> Сохранить</Button>
+                                        }}>
+                                            <Plus className="w-4 h-4"/> Сохранить
+                                        </Button>
                                     </CardContent>
                                 </Card>
                             ))}
@@ -131,43 +211,67 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                     }}>← Назад</Button>
                 </div>
             )}
+
             {!showSearch && (
                 <div className="space-y-4">
-                    <h2 className="text-lg font-semibold flex items-center gap-2"><Bookmark className="w-5 h-5"/> Моя
-                        коллекция</h2>
-                    {movies.length === 0 ? <p className="text-gray-500">Нет фильмов в коллекции</p> : (
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <Bookmark className="w-5 h-5"/> Моя коллекция
+                    </h2>
+                    {movies.length === 0 ? (
+                        <p className="text-gray-500">Нет фильмов в коллекции</p>
+                    ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {movies.map((movie: any) => (
                                 <Card key={movie.id}
                                       className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
                                     <CardContent className="p-3 space-y-3">
-                                        <img src={movie.poster} alt={movie.name}
-                                             className="w-full aspect-[2/3] object-cover rounded-lg cursor-pointer"
-                                             onClick={() => openMovie(movie.id, true)}/>
-                                        <h3 className="font-medium truncate cursor-pointer"
-                                            onClick={() => openMovie(movie.id, true)}>{movie.name}</h3>
+                                        <img
+                                            src={movie.poster}
+                                            alt={movie.name}
+                                            className="w-full aspect-[2/3] object-cover rounded-lg cursor-pointer"
+                                            onClick={() => openMovie(movie.id, true)}
+                                        />
+                                        <h3
+                                            className="font-medium truncate cursor-pointer"
+                                            onClick={() => openMovie(movie.id, true)}
+                                        >
+                                            {movie.name}
+                                        </h3>
+
                                         <div className="space-y-1">
                                             <div className="flex items-center justify-between text-xs text-gray-400">
                                                 <span>Рейтинг</span>
-                                                <span className="flex items-center gap-1"><Star
-                                                    className="w-3 h-3 fill-yellow-500 text-yellow-500"/> {movie.user_rating || 0}</span>
+                                                <span className="flex items-center gap-1">
+                                                <Star className="w-3 h-3 fill-yellow-500 text-yellow-500"/>
+                                                    {movie.user_rating || 0}
+                                            </span>
                                             </div>
-                                            <Slider value={[movie.user_rating || 0]} max={10} step={0.5}
-                                                    onValueChange={([value]) => rateMovie(movie.id, value)}
-                                                    className="w-full"/>
+                                            <Slider
+                                                value={[movie.user_rating || 0]}
+                                                max={10}
+                                                step={0.5}
+                                                onValueChange={([value]) => rateMovie(movie.id, value)}
+                                                className="w-full"
+                                            />
                                         </div>
-                                        <div className="flex gap-2">
-                                            <Button size="sm" variant={movie.user_rating > 0 ? "secondary" : "outline"}
-                                                    className="flex-1"><Star
-                                                className="w-3 h-3"/> {movie.user_rating || 0}</Button>
-                                            {movie.is_series && (
-                                                <Button size="sm" variant={movie.is_tracking ? "secondary" : "outline"}
-                                                        className="flex-1"
-                                                        onClick={() => toggleTracking(movie.id, movie.is_tracking)}><Tv
-                                                    className="w-3 h-3"/> {movie.is_tracking ? 'Отслеживаю' : 'Отслеживать'}
+
+                                        {movie.is_series && (
+                                            <div className="flex justify-end">
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="h-8 w-8 p-0"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleTracking(movie.id, movie.is_tracking);
+                                                    }}
+                                                >
+                                                    <Tv className={`w-4 h-4 transition-colors ${
+                                                        movie.is_tracking ? 'text-red-500 fill-red-500' : 'text-gray-400'
+                                                    }`}/>
                                                 </Button>
-                                            )}
-                                        </div>
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                             ))}
@@ -178,5 +282,4 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
         </div>
     );
 };
-
 export default Home;

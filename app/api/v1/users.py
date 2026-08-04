@@ -1,8 +1,8 @@
 from fastapi import APIRouter, status, Query
 
-from app.schemas.movie_schemas import MovieWithUserRatingResponse
+from app.schemas.movie_schemas import MovieWithUserRatingResponse, MovieIdSchema, RatingSchema, TrackingSchema
 from app.api.dependencies import ServiceUserDep, CurrentUserVkIdDep, VkUserIdDep
-from app.schemas.user_schemas import UserResponse, UserCreate, UserUpdate
+from app.schemas.user_schemas import UserResponse, UserCreate, UserUpdate, UserCreateId
 
 users_rout = APIRouter(prefix="/users", tags=["users"])
 
@@ -30,16 +30,16 @@ async def get_my_movies(
     return await service.get_user_movies_with_rating(vk_id)
 
 
-@users_rout.post("/me/movies", summary='Добавить фильм в коллекцию', status_code=status.HTTP_201_CREATED)
+@users_rout.post("/me/movies/{movie_id}", summary='Добавить фильм в коллекцию', status_code=status.HTTP_201_CREATED)
 async def add_movie_to_collection(
     service: ServiceUserDep,
     vk_id: CurrentUserVkIdDep,
-    movie_id: int = Query(...),
+    movie_id: int,
 
 ):
     return await service.add_movie_to_collection(vk_id, movie_id)
 
-@users_rout.delete("/me/movies", summary='Удалить фильм из коллекции')
+@users_rout.delete("/me/movies/{movie_id}", summary='Удалить фильм из коллекции')
 async def delete_movie_from_collection(
     vk_id: CurrentUserVkIdDep,
     movie_id: int,
@@ -47,24 +47,23 @@ async def delete_movie_from_collection(
 ):
     await service.delete_movie_from_collection(vk_id, movie_id)
 
-@users_rout.put("/me/movies/rating", summary='Оценить фильм')
+@users_rout.put("/me/movies/{movie_id}/rating", summary='Оценить фильм')
 async def rate_movie(
     vk_id: CurrentUserVkIdDep,
     movie_id: int,
-    rating: float,
+    rating_data: RatingSchema,
     service: ServiceUserDep,
 ):
-    return await service.rate_movie(vk_id, movie_id, rating)
+    return await service.rate_movie(vk_id, movie_id, rating_data.rating)
 
-@users_rout.put("/me/movies/track")
+@users_rout.put("/me/movies/{movie_id}/track", summary='Отслеживание сериала')
 async def toggle_tracking(
     vk_id: CurrentUserVkIdDep,
+    movie_id: int,
+    track_data: TrackingSchema,
     service: ServiceUserDep,
-    movie_id: int = Query(...),
-    is_tracking: bool = Query(...),
-
 ):
-    return await service.toggle_movie_tracking(vk_id, movie_id, is_tracking)
+    return await service.toggle_movie_tracking(vk_id, movie_id, track_data.is_tracking)
 
 @users_rout.get("/{user_id}", summary='Получить по ID', response_model=UserResponse)
 async def get_user(

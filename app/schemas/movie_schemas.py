@@ -2,7 +2,6 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 
-
 class MovieResponse(BaseModel):
     id: int
     id_kino: int
@@ -68,3 +67,9 @@ class MovieUpdate(BaseModel):
     rating_imdb: float | None = None
     genres: list | None = None
     countries: list | None = None
+
+class RatingSchema(BaseModel):
+    rating: float
+
+class TrackingSchema(BaseModel):
+    is_tracking: bool
