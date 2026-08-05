@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Sequence
 
 from app.db.models import Movie
 
@@ -30,7 +31,11 @@ class BaseMovieRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_tracked_series(self) -> list[tuple[int, int, int, int, str]]:
+    async def search_by_query(self, query: str, limit: int = 10) -> Sequence[Movie]:
+        pass
+
+    @abstractmethod
+    async def get_tracked_series(self) -> Sequence[tuple[int, int, int | None, int, str]]:
         pass
 
 

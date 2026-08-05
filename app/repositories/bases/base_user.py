@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Sequence
 
 from app.db.models import User, Movie, UserMovie
 
@@ -35,7 +36,7 @@ class BaseUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_movies_with_user_rating(self, vk_id: int) -> list[tuple[Movie, UserMovie]]:
+    async def get_movies_with_user_rating(self, vk_id: int) -> Sequence[tuple[Movie, UserMovie]]:
         pass
 
     @abstractmethod
@@ -45,6 +46,11 @@ class BaseUserRepository(ABC):
     @abstractmethod
     async def delete_movie_from_user(self, user_id: int, movie_id: int) -> bool:
         pass
+
+    @abstractmethod
+    async def toggle_tracking(self, user_id: int, movie_id: int, is_tracking: bool) -> bool:
+        pass
+
 
 
 

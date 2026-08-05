@@ -32,3 +32,6 @@ class UserUpdate(BaseModel):
     last_name: str | None
     telephone: str | None
     avatar: str | None
+
+class UserLoginPass(BaseModel):
+    password: str

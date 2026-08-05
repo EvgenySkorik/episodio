@@ -7,11 +7,13 @@ from contextlib import asynccontextmanager
 
 from starlette.middleware.cors import CORSMiddleware
 
+from app.api.v1.admin import admin_rout
 from app.api.v1.auth import auth_rout
 from app.api.v1.movies import movies_rout
 from app.api.v1.users import users_rout
 from app.core.config import settings
 from app.api.except_handlers import register_exception_handlers
+from app.core.logging import setup_logging
 from app.db.database import create_tables
 from app.infrastructure.http_client import HTTPClient
 
@@ -25,6 +27,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # await delete_tables()
 
 
+setup_logging()
 app = FastAPI(
     title=settings.title,
     description=settings.description,
@@ -53,12 +56,10 @@ register_exception_handlers(app)
 app.include_router(movies_rout)
 app.include_router(users_rout)
 app.include_router(auth_rout)
-
+app.include_router(admin_rout)
 @app.get("/")
 async def root():
     return {"status": "ok"}
 
-@app.get("/trigger-error")
-async def trigger_error():
-    raise Exception("Тестовая ошибка для Hawk!")
+
 

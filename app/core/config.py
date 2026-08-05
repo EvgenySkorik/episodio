@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -69,10 +71,19 @@ class AppSettings(BaseSettings):
 
     secret_jwt_key: str = ""
     hawk_secret_token: str = ""
-    title: str = "Kino Movie API"
-    description: str = "API для поиска и хранения фильмов (БД + Кинопоиск)"
+
+    title: str = "Episodio"
+    description: str = "API для поиска и хранения фильмов и сериалов"
     version: str = "2.0.0"
 
+    log_file_name: str = "KinoMovieApi.log"
+    logs_password: str = ""
+    log_level: str = "INFO"
+
+    @property
+    def log_file_path(self) -> Path:
+        """Возвращает путь к файлу логов"""
+        return Path(self.log_file_name)
 
 settings: AppSettings = AppSettings()
 

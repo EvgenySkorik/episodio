@@ -4,7 +4,7 @@ from httpx import HTTPStatusError
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.exceptions.exceptions import UserNotFoundError, MovieNotFoundError, KinopoiskAPIError, AppError, \
-    SecurityError, TokenExpiredError, InvalidTokenError
+    SecurityError, TokenExpiredError, InvalidTokenError, LogFileNotFoundError, LogFileReadError
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -49,7 +49,7 @@ def register_exception_handlers(app: FastAPI):
     @app.exception_handler(SecurityError)
     async def security_error_handler(request: Request, exc: SecurityError):
         logger.error(f"Security error: {exc}")
-        return JSONResponse(status_code=502, content={"detail": str(exc)})
+        return JSONResponse(status_code=403, content={"detail": str(exc)})
 
     @app.exception_handler(TokenExpiredError)
     async def token_expired_handler(request: Request, exc: TokenExpiredError):
@@ -60,6 +60,22 @@ def register_exception_handlers(app: FastAPI):
     async def invalid_token_handler(request: Request, exc: InvalidTokenError):
         logger.warning(f"Invalid token: {exc}")
         return JSONResponse(status_code=401, content={"detail": "Токен невалиден"})
+
+    @app.exception_handler(LogFileNotFoundError)
+    async def log_file_not_found_handler(request: Request, exc: LogFileNotFoundError):
+        logger.warning(f"Файл логов не найден: {exc}")
+        return JSONResponse(
+            status_code=404,
+            content={"detail": str(exc)}
+        )
+
+    @app.exception_handler(LogFileReadError)
+    async def log_file_read_error_handler(request: Request, exc: LogFileReadError):
+        logger.error(f"Ошибка чтения логов: {exc}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Ошибка чтения файла логов"}
+        )
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):

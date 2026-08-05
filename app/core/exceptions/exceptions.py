@@ -35,3 +35,15 @@ class TokenExpiredError(SecurityError):
 class InvalidTokenError(SecurityError):
     """Токен невалиден."""
     pass
+
+class FileOperationError(AppError):
+    """Ошибка при работе с файлами"""
+    pass
+
+class LogFileNotFoundError(FileOperationError):
+    """Файл логов не найден"""
+    pass
+
+class LogFileReadError(FileOperationError):
+    """Ошибка чтения файла логов"""
+    pass

@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from sqlalchemy import select, update, delete
 from sqlalchemy.dialects.postgresql.dml import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -94,7 +96,7 @@ class UserRepository(BaseUserRepository):
         await self._session.commit()
         logger.info(f"Добавлен рейтинг в БД")
 
-    async def get_movies_with_user_rating(self, vk_id: int) -> list[tuple[Movie, UserMovie]]:
+    async def get_movies_with_user_rating(self, vk_id: int) -> Sequence[tuple[Movie, UserMovie]]:
         """Получить список фильмов пользователя с его рейтингом и статусом просмотра по VK ID."""
         stmt = (
             select(Movie, UserMovie)

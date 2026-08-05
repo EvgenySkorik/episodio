@@ -1,3 +1,5 @@
+from typing import Any
+
 import httpx
 
 from app.core.config import AppSettings
@@ -17,7 +19,7 @@ class VkClient:
         self._api_url = self._settings.vk.api_url
         self._api_version = self._settings.vk.api_version
 
-    async def _call(self, method: str, params: dict | None = None) -> dict:
+    async def _call(self, method: str, params: dict | None = None) -> dict[str, Any]:
         """Выполняет запрос к VK API."""
         if params is None:
             params = {}

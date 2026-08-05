@@ -1,3 +1,5 @@
+from typing import Sequence
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,7 +70,7 @@ class MovieRepository(BaseMovieRepository):
         logger.info(f"Удалён Movie id={movie_id} из БД")
         return True
 
-    async def search_by_query(self, query: str, limit: int = 10) -> list[Movie]:
+    async def search_by_query(self, query: str, limit: int = 10) -> Sequence[Movie]:
         """Получить список ORM-объектов фильмов по совпадению имени из БД с лимитом."""
         result = await self._session.execute(
             select(Movie)
@@ -77,7 +79,7 @@ class MovieRepository(BaseMovieRepository):
         )
         return result.scalars().all()
 
-    async def get_tracked_series(self) -> list[tuple[int, int, int, int, str]]:
+    async def get_tracked_series(self) -> Sequence[tuple[int, int, int | None, int, str]]:
         """Получить все сериалы, которые отслеживают пользователи,
         Returns:
             - id (int): ID фильма в БД.
