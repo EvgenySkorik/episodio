@@ -2,8 +2,8 @@ import asyncio
 from typing import Any
 
 from app.core.logging import get_logger
-from app.infrastructure.celery_app import celery_app
 from app.factories import create_container
+from app.infrastructure.celery_app import celery_app
 
 logger = get_logger(__name__)
 
@@ -26,6 +26,6 @@ def check_series_updates(self: Any) -> None:
     try:
         loop.run_until_complete(_run())
         logger.info("Задача check_series_updates завершена успешно")
-    except Exception as exc:
-        logger.error(f"Ошибка в задаче check_series_updates: {exc}", exc_info=True)
+    except Exception as exc: # noqa: BLE001
+        logger.error(f"Ошибка в задаче check_series_updates: {exc}")
         raise self.retry(exc=exc)

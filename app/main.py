@@ -1,18 +1,17 @@
-from typing import AsyncIterator
-
-from prometheus_fastapi_instrumentator import Instrumentator
-from fastapi import FastAPI
-from hawk_python_sdk.modules.fastapi import HawkFastapi
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+from hawk_python_sdk.modules.fastapi import HawkFastapi
+from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.middleware.cors import CORSMiddleware
 
+from app.api.except_handlers import register_exception_handlers
 from app.api.v1.admin import admin_rout
 from app.api.v1.auth import auth_rout
 from app.api.v1.movies import movies_rout
 from app.api.v1.users import users_rout
 from app.core.config import settings
-from app.api.except_handlers import register_exception_handlers
 from app.core.logging import setup_logging
 from app.db.database import create_tables
 from app.infrastructure.http_client import HTTPClient

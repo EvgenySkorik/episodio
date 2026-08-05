@@ -1,12 +1,12 @@
-from typing import Sequence
+from collections.abc import Sequence
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import delete, select, update
 from sqlalchemy.dialects.postgresql.dml import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.logging import get_logger
-from app.db.models import User, Movie, UserMovie
+from app.db.models import Movie, User, UserMovie
 from app.repositories.bases.base_user import BaseUserRepository
 
 logger = get_logger(__name__)
@@ -94,7 +94,7 @@ class UserRepository(BaseUserRepository):
         ).values(user_rating=rating)
         await self._session.execute(stmt)
         await self._session.commit()
-        logger.info(f"Добавлен рейтинг в БД")
+        logger.info("Добавлен рейтинг в БД")
 
     async def get_movies_with_user_rating(self, vk_id: int) -> Sequence[tuple[Movie, UserMovie]]:
         """Получить список фильмов пользователя с его рейтингом и статусом просмотра по VK ID."""
@@ -103,10 +103,11 @@ class UserRepository(BaseUserRepository):
             .join(UserMovie, Movie.id == UserMovie.movie_id)
             .join(User, User.id == UserMovie.user_id)
             .where(User.id_vk == vk_id)
+            .order_by(Movie.name.asc())
         )
         result = (await self._session.execute(stmt)).all()
-        logger.info(f"Получен список фильмов с рейтингом из БД")
-        return result
+        logger.info("Получен список фильмов с рейтингом из БД")
+        return result # type: ignore[return-value]
 
     async def add_movie_to_user(self, user_id: int, movie_id: int) -> bool:
         """Добавить фильм/сериал к модели User в коллекцию, только для PostgreSQL"""
@@ -117,7 +118,7 @@ class UserRepository(BaseUserRepository):
 
         result = await self._session.execute(stmt)
         await self._session.commit()
-        return result.rowcount > 0
+        return result.rowcount > 0 # type: ignore
 
 
     async def delete_movie_from_user(self, user_id: int, movie_id: int) -> bool:
@@ -129,7 +130,7 @@ class UserRepository(BaseUserRepository):
 
         result = await self._session.execute(stmt)
         await self._session.commit()
-        return result.rowcount > 0
+        return result.rowcount > 0 # type: ignore
 
     async def toggle_tracking(self, user_id: int, movie_id: int, is_tracking: bool) -> bool:
         """Отслеживать или нет сериал у модели User в связи UserMovie - is_tracking"""
@@ -140,4 +141,4 @@ class UserRepository(BaseUserRepository):
         )
         result = await self._session.execute(stmt)
         await self._session.commit()
-        return result.rowcount > 0
+        return result.rowcount > 0 # type: ignore

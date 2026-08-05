@@ -9,7 +9,6 @@ celery_app = Celery(
     backend=settings.celery.result_backend,
 )
 
-from app.tasks import movie_tasks
 celery_app.autodiscover_tasks(['app.tasks'])
 
 celery_app.conf.update(

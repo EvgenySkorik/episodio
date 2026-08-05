@@ -33,20 +33,19 @@ class VkClient:
                 params=params
             )
             response.raise_for_status()
-            data = response.json()
+            data: dict[str, Any] = response.json()
 
             if "error" in data:
                 error_msg = data["error"].get("error_msg", "Unknown VK error")
                 logger.error(f"VK API error: {error_msg}")
                 raise NotificationError(f"VK API error: {error_msg}")
-
             return data
 
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error from VK: {e.response.status_code}")
             raise NotificationError(f"VK API unavailable: {e.response.status_code}") from e
         except Exception as e:
-            logger.error(f"Unexpected error calling VK API: {e}", exc_info=True)
+            logger.error(f"Unexpected error calling VK API: {e}")
             raise NotificationError("Failed to call VK API") from e
 
     async def get_long_poll_server(self, group_id: int) -> dict:

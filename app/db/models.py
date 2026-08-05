@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import JSON, func, ForeignKey
+from sqlalchemy import JSON, ForeignKey, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 

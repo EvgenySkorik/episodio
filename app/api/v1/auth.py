@@ -1,10 +1,10 @@
+import json
+
 from fastapi import APIRouter, HTTPException, Request
 
 from app.api.dependencies import ServiceUserDep
-from app.core.config import settings
 from app.core.logging import get_logger
 from app.infrastructure.security import create_jwt
-from scripts.scr1 import get_logs_file
 
 logger = get_logger(__name__)
 
@@ -15,12 +15,12 @@ auth_rout = APIRouter(prefix="/auth", tags=["auth"])
 async def auth_vk(
         request: Request,
         user_service: ServiceUserDep,
-):
+) -> dict[str, str]:
     vk_id = None
     try:
         body = await request.json()
         vk_id = body.get("vk_user_id")
-    except:
+    except json.JSONDecodeError:
         pass
 
     if not vk_id:
@@ -35,23 +35,6 @@ async def auth_vk(
     token = create_jwt(vk_id)
     return {"access_token": token, "token_type": "bearer"}
 
-#-----------Сервисные ручки-----------
-@auth_rout.get("/trigger-error")
-async def trigger_error():
-    raise Exception("Тестовая ошибка для Hawk!")
 
-@auth_rout.get("/logs")
-async def get_logs(
-        password: str
-):
-    if password != settings.logs_password:
-        return {"status": "нет доступа"}
-    try:
-        f = get_logs_file()
-        return {"logs": f}
-    except FileNotFoundError:
-        return {"status": "Файл логов не найден"}
-    except Exception as e:
-        return {"status": f"Ошибка: {str(e)}"}
 
 

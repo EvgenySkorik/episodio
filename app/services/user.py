@@ -1,9 +1,9 @@
-from app.core.exceptions.exceptions import UserNotFoundError, MovieNotFoundError
+from app.core.exceptions.exceptions import MovieNotFoundError, UserNotFoundError
 from app.core.logging import get_logger
 from app.repositories.bases.base_movie import BaseMovieRepository
-from app.schemas.movie_schemas import MovieResponse, MovieWithUserRatingResponse
-from app.schemas.user_schemas import UserResponse, UserCreate, UserUpdate
 from app.repositories.bases.base_user import BaseUserRepository
+from app.schemas.movie_schemas import MovieResponse, MovieWithUserRatingResponse
+from app.schemas.user_schemas import UserCreate, UserResponse, UserUpdate
 
 logger = get_logger(__name__)
 
@@ -106,7 +106,7 @@ class UserService:
         rows = await self._user_repo.get_movies_with_user_rating(vk_id)
 
         if not rows:
-            logger.info(f"Фильмы не обнаружены")
+            logger.info("Фильмы не обнаружены")
             return []
 
         movies = []
@@ -119,7 +119,7 @@ class UserService:
                 is_tracking=user_movie.is_tracking or False,
             )
             movies.append(mov_with_rait)
-            logger.info(f"Получен список фильмов пользователя по vk_id")
+            logger.info("Получен список фильмов пользователя по vk_id")
         return movies
 
 

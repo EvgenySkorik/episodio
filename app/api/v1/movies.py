@@ -1,10 +1,11 @@
+from typing import Annotated
+
 from fastapi import APIRouter, status
 from fastapi.params import Query
 
 from app.api.dependencies import ServiceMovieDep
 from app.core.logging import get_logger
-
-from app.schemas.movie_schemas import MovieResponse, MovieCreate, MovieUpdate
+from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
 
 logger = get_logger(__name__)
 
@@ -14,7 +15,7 @@ movies_rout = APIRouter(prefix="/movies", tags=["movies"])
 @movies_rout.get("/search", summary='Поиск фильма', response_model=list[MovieResponse])
 async def search_movie(
         service: ServiceMovieDep,
-        q: str = Query(..., min_length=1)
+        q: Annotated[str, Query(..., min_length=1)],
 ):
     return await service.get_movie_by_name(q)
 
@@ -76,7 +77,7 @@ async def update_movie(
 async def delete_movie(
         service: ServiceMovieDep,
         id: int,
-):
+) -> None:
     """Ручка удаления фильма"""
-    _ = await service.delete_movie(id)
+    await service.delete_movie(id)
 

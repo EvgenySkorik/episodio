@@ -1,7 +1,6 @@
-from app.core.config import settings, AppSettings
+from app.core.config import AppSettings
 from app.core.exceptions.exceptions import KinopoiskAPIError
 from app.core.logging import get_logger
-
 from app.infrastructure.http_client import HTTPClient
 from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
 

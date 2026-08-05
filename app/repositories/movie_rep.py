@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -95,4 +95,4 @@ class MovieRepository(BaseMovieRepository):
                 .distinct()
                 )
         result = await self._session.execute(stmt)
-        return result.all()
+        return result.all() # type: ignore[return-value]

@@ -3,8 +3,17 @@ from fastapi.responses import JSONResponse
 from httpx import HTTPStatusError
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.core.exceptions.exceptions import UserNotFoundError, MovieNotFoundError, KinopoiskAPIError, AppError, \
-    SecurityError, TokenExpiredError, InvalidTokenError, LogFileNotFoundError, LogFileReadError
+from app.core.exceptions.exceptions import (
+    AppError,
+    InvalidTokenError,
+    KinopoiskAPIError,
+    LogFileNotFoundError,
+    LogFileReadError,
+    MovieNotFoundError,
+    SecurityError,
+    TokenExpiredError,
+    UserNotFoundError,
+)
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -17,7 +26,7 @@ def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(SQLAlchemyError)
     async def db_error_handler(request: Request, exc: SQLAlchemyError):
-        logger.error(f"Database error: {exc}", exc_info=True)
+        logger.error(f"Database error: {exc}")
         return JSONResponse(
             status_code=500,
             content={"detail": "Ошибка базы данных. Мы уже чиним!"},
@@ -79,5 +88,5 @@ def register_exception_handlers(app: FastAPI):
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
-        logger.error(f"Unhandled error: {exc}", exc_info=True)
+        logger.error(f"Unhandled error: {exc}")
         return JSONResponse(status_code=500, content={"detail": "Внутренняя ошибка сервера"})

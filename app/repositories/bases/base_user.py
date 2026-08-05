@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Sequence
+from collections.abc import Sequence
 
-from app.db.models import User, Movie, UserMovie
+from app.db.models import Movie, User, UserMovie
 
 
 class BaseUserRepository(ABC):

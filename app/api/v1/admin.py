@@ -1,8 +1,13 @@
-from fastapi import APIRouter, HTTPException, Request, Body
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from app.core.exceptions.exceptions import TestError
 from app.core.logging import get_logger
-from app.infrastructure.security import verify_admin_password, read_log_file, read_log_lines
+from app.infrastructure.security import (
+    read_log_file,
+    read_log_lines,
+    verify_admin_password,
+)
 from app.schemas.user_schemas import UserLoginPass
 
 logger = get_logger(__name__)
@@ -17,7 +22,7 @@ async def trigger_error():
        Вызывает исключение, которое должно быть отправлено в Hawk.
        """
     logger.warning("Вызван тестовый эндпоинт /trigger-error")
-    raise Exception("Тестовая ошибка для Hawk!")
+    raise TestError("Тестовая ошибка для Hawk!")
 
 @admin_rout.post("/logs", summary="Получить логи")
 async def get_logs(
@@ -28,7 +33,8 @@ async def get_logs(
         Получить содержимое файла логов.
     """
     if not verify_admin_password(password.password):
-        logger.warning(f"Неудачная попытка доступа к логам с IP: {request.client.host}")
+        client_ip = request.client.host if request.client else "unknown"
+        logger.warning(f"Неудачная попытка доступа к логам с IP: {client_ip}")
         raise HTTPException(status_code=403, detail="Неверный пароль")
 
     logs = await read_log_file()
@@ -50,7 +56,8 @@ async def get_latest_logs(
 ) -> JSONResponse:
     """Получить последние N строк логов"""
     if not verify_admin_password(password.password):
-        logger.warning(f"Неудачная попытка доступа к логам с IP: {request.client.host}")
+        client_ip = request.client.host if request.client else "unknown"
+        logger.warning(f"Неудачная попытка доступа к логам с IP: {client_ip}")
         raise HTTPException(status_code=403, detail="Неверный пароль")
 
     logs = await read_log_lines(lines)

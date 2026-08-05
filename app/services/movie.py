@@ -1,12 +1,13 @@
 import asyncio
+from collections.abc import Sequence
 
 from app.clients.kp_client import KinopoiskClient
 from app.core.config import settings
 from app.core.exceptions.exceptions import MovieNotFoundError
 from app.core.logging import get_logger
-from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
-from app.schemas.movie_schemas import MovieResponse, MovieCreate, MovieUpdate
 from app.repositories.bases.base_movie import BaseMovieRepository
+from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
+from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
 from app.services.notification import NotificationService
 
 logger = get_logger(__name__)
@@ -106,11 +107,11 @@ class MovieService:
 
     async def _check_update_one(
             self,
-            mov_id,
-            kp_id,
-            current_episodes,
-            user_id,
-            name,
+            mov_id: int,
+            kp_id: int,
+            current_episodes: int,
+            user_id: int,
+            name: str,
             semaphore: asyncio.Semaphore,
     ) -> dict[str, int | str] | None:
         """
@@ -142,7 +143,7 @@ class MovieService:
         return None
 
 
-    async def _check_notify_all(self, serials: list) -> None:
+    async def _check_notify_all(self, serials: Sequence) -> None:
         """
         Проверяет все отслеживаемые сериалы и отправляет уведомления.
 
@@ -157,11 +158,11 @@ class MovieService:
         for result in results:
             if isinstance(result, Exception):
                 logger.error(f"Ошибка при проверке сериала: {result}")
-            elif result:
+            elif result and isinstance(result, dict):
                 await self._notify_service.send_notification(
-                    result["user_id"],
-                    result["name"],
-                    result["new_episodes"],
+                    result["user_id"], # type: ignore[arg-type]
+                    result["name"], # type: ignore[arg-type]
+                    result["new_episodes"], # type: ignore[arg-type]
                 )
 
 

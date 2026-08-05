@@ -1,6 +1,6 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import AsyncIterator
 
 from app.clients.kp_client import KinopoiskClient
 from app.clients.vk_client import VkClient
@@ -13,7 +13,6 @@ from app.repositories.user_rep import UserRepository
 from app.services.movie import MovieService
 from app.services.notification import NotificationService
 from app.services.user import UserService
-
 
 logger = get_logger(__name__)
 

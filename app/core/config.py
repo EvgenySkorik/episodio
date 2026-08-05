@@ -3,7 +3,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 load_dotenv()
 
 
@@ -23,7 +22,7 @@ class DatabaseSettings(BaseSettings):
 
 class KinopoiskSettings(BaseSettings):
     """Класс с настройками АПИ Кинопоиска"""
-    url: str = f"https://api.poiskkino.dev/"
+    url: str = "https://api.poiskkino.dev/"
     api_key: str = ""
 
     @property

@@ -1,19 +1,22 @@
 import base64
 import hashlib
 import hmac
-import os
-from typing import Any
-
-import aiofiles
 from collections import OrderedDict
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
+from typing import Any
 from urllib.parse import urlencode
 
+import aiofiles
 import jwt
 
 from app.core.config import settings
-from app.core.exceptions.exceptions import TokenExpiredError, InvalidTokenError, SecurityError, LogFileNotFoundError, \
-    LogFileReadError
+from app.core.exceptions.exceptions import (
+    InvalidTokenError,
+    LogFileNotFoundError,
+    LogFileReadError,
+    SecurityError,
+    TokenExpiredError,
+)
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -57,8 +60,8 @@ def create_jwt(vk_id: int) -> str:
     """Создаёт JWT токен для пользователя VK."""
     payload = {
         "vk_id": vk_id,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=24),
-        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(UTC) + timedelta(hours=24),
+        "iat": datetime.now(UTC),
     }
     return jwt.encode(payload, settings.secret_jwt_key, algorithm="HS256")
 
@@ -98,14 +101,15 @@ async def read_log_file() -> str:
 
     try:
         async with aiofiles.open(log_path, 'r', encoding='utf-8') as f:
-            return await f.read()
+            content: str = await f.read()
+            return content
 
     except PermissionError as e:
         logger.error(f"Нет прав на чтение логов: {e}")
         raise LogFileReadError(f"Нет прав на чтение файла логов: {log_path}")
-    except Exception as e:
+    except OSError as e:
         logger.error(f"Ошибка чтения логов: {e}")
-        raise LogFileReadError(f"Ошибка чтения файла логов: {str(e)}")
+        raise LogFileReadError(f"Ошибка чтения файла логов: {e!s}")
 
 
 async def read_log_lines(n: int = 50) -> str:
@@ -116,6 +120,6 @@ async def read_log_lines(n: int = 50) -> str:
         return '\n'.join(lines[-n:])
     except LogFileNotFoundError:
         raise
-    except Exception as e:
+    except OSError as e:
         logger.error(f"Ошибка чтения логов: {e}")
-        raise LogFileReadError(f"Ошибка при чтении последних {n} строк: {str(e)}")
+        raise LogFileReadError(f"Ошибка при чтении последних {n} строк: {e!s}")

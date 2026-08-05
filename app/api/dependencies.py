@@ -1,8 +1,6 @@
-import hashlib
-import hmac
-from typing import Annotated, TypeAlias
+from typing import Annotated
 
-from fastapi import Depends, Request, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,12 +13,9 @@ from app.infrastructure.http_client import HTTPClient
 from app.infrastructure.security import get_current_user_impl, verify_vk_sign
 from app.repositories.movie_rep import MovieRepository
 from app.repositories.user_rep import UserRepository
-
 from app.services.movie import MovieService
 from app.services.notification import NotificationService
-
 from app.services.user import UserService
-
 
 # ---------------------------------------------------------------------------
 # --------------------------VK MiniApp проверка------------------------------
@@ -64,7 +59,7 @@ async def get_http_client(request: Request) -> HTTPClient:
     HTTPClient создаётся ОДИН раз при старте приложения и живёт
     до его остановки. Переиспользует connection pool.
     """
-    return request.app.state.http_client
+    return request.app.state.http_client # type: ignore[no-any-return]
 
 
 async def get_kinopoisk_client(
@@ -109,8 +104,8 @@ async def get_user_service(
 # -------------------Типизированные аннотации для роутеров--------------------
 # ----------------------------------------------------------------------------
 
-ServiceMovieDep: TypeAlias = Annotated[MovieService, Depends(get_movie_service)]
-ServiceUserDep: TypeAlias = Annotated[UserService, Depends(get_user_service)]
-VkUserIdDep: TypeAlias = Annotated[int, Depends(get_vk_user_id)]
-CurrentUserVkIdDep: TypeAlias = Annotated[int, Depends(get_current_user)]
+type ServiceMovieDep = Annotated[MovieService, Depends(get_movie_service)]
+type ServiceUserDep = Annotated[UserService, Depends(get_user_service)]
+type VkUserIdDep = Annotated[int, Depends(get_vk_user_id)]
+type CurrentUserVkIdDep = Annotated[int, Depends(get_current_user)]
 

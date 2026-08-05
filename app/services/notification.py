@@ -3,7 +3,6 @@ from app.core.logging import get_logger
 from app.repositories.bases.base_movie import BaseMovieRepository
 from app.repositories.bases.base_user import BaseUserRepository
 
-
 logger = get_logger(__name__)
 
 class NotificationService:

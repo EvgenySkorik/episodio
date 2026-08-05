@@ -1,6 +1,7 @@
-from datetime import date, datetime
+from datetime import UTC, datetime
 
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, field_validator
+
 
 class MovieResponse(BaseModel):
     id: int
@@ -49,7 +50,7 @@ class MovieCreate(BaseModel):
     @field_validator('year')
     @classmethod
     def not_by_next_year(cls, value: int) -> int:
-        if value > datetime.now().year:
+        if value > datetime.now(UTC).year:
             raise ValueError(f'Year {value} cannot be in the future')
         return value
 

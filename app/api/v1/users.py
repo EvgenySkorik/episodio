@@ -1,8 +1,12 @@
-from fastapi import APIRouter, status, Query
+from fastapi import APIRouter, status
 
-from app.schemas.movie_schemas import MovieWithUserRatingResponse, RatingSchema, TrackingSchema
-from app.api.dependencies import ServiceUserDep, CurrentUserVkIdDep
-from app.schemas.user_schemas import UserResponse, UserCreate, UserUpdate
+from app.api.dependencies import CurrentUserVkIdDep, ServiceUserDep
+from app.schemas.movie_schemas import (
+    MovieWithUserRatingResponse,
+    RatingSchema,
+    TrackingSchema,
+)
+from app.schemas.user_schemas import UserCreate, UserResponse, UserUpdate
 
 users_rout = APIRouter(prefix="/users", tags=["users"])
 

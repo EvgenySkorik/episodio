@@ -29,6 +29,6 @@ def send_notification_series(self: Any, user_id: int) -> None:
     try:
         loop.run_until_complete(_run())
         logger.info("Задача send_notification_series завершена успешно")
-    except Exception as exc:
-        logger.error(f"Ошибка: {exc}", exc_info=True)
+    except Exception as exc: # noqa: BLE001
+        logger.error(f"Ошибка: {exc}")
         raise self.retry(exc=exc)
