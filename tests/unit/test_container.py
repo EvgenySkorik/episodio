@@ -1,8 +1,8 @@
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from app.factories import Container, create_container
+from app.factories import create_container
 from app.services.movie import MovieService
 from app.services.notification import NotificationService
 from app.services.user import UserService

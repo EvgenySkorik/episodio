@@ -1,5 +1,6 @@
 from app.core.exceptions.exceptions import MovieNotFoundError, UserNotFoundError
 from app.core.logging import get_logger
+from app.infrastructure.hawk_client import HawkClient
 from app.repositories.bases.base_movie import BaseMovieRepository
 from app.repositories.bases.base_user import BaseUserRepository
 from app.schemas.movie_schemas import MovieResponse, MovieWithUserRatingResponse
@@ -11,9 +12,10 @@ logger = get_logger(__name__)
 class UserService:
     """Сервис для работы с Пользователем"""
 
-    def __init__(self, user_repo: BaseUserRepository, movie_repo: BaseMovieRepository):
+    def __init__(self, user_repo: BaseUserRepository, movie_repo: BaseMovieRepository, hawk: HawkClient):
         self._user_repo = user_repo
         self._movie_repo = movie_repo
+        self._hawk = hawk
 
     async def get_user_by_id(self, user_id: int) -> UserResponse:
         """Получить пользователя по ID, отдает схему"""
@@ -22,6 +24,10 @@ class UserService:
             logger.warning(f"Пользователь c id={user_id} не найден")
             raise UserNotFoundError(f"Пользователь {user_id} не найден")
         logger.info(f"Получен пользователь {user_orm.first_name} c id={user_id}")
+        await self._hawk.send_event(
+            message="Получен пользователь",
+            extra={"name": user_orm.first_name, "id": user_id},
+        )
         return UserResponse.model_validate(user_orm, from_attributes=True)
 
     async def get_user_by_vk_id(self, vk_id: int) -> UserResponse:
@@ -60,6 +66,10 @@ class UserService:
         }
         user_orm = await self._user_repo.create(user_data)
         logger.info(f"Создан новый пользователь с VK ID {vk_id}")
+        await self._hawk.send_event(
+            message="Создан новый пользователь с VK ID",
+            extra={"vk_id": vk_id},
+        )
         return UserResponse(
             id=user_orm.id,
             id_vk=user_orm.id_vk,
@@ -136,6 +146,7 @@ class UserService:
         added = await self._user_repo.add_movie_to_user(user_orm.id, movie_orm.id)
         action = "уже в" if not added else "добавлен в"
         logger.info(f'Фильм {movie_orm.name} {action} коллекции пользователя {user_orm.first_name}')
+        await self._hawk.send_event(message="Добавили в коллекцию", extra={"name": movie_orm.name})
         return added
 
     async def delete_movie_from_collection(self, vk_id: int, movie_id: int) -> bool:

@@ -7,6 +7,7 @@ from app.clients.vk_client import VkClient
 from app.core.config import settings
 from app.core.logging import get_logger
 from app.db.database import AsyncSessionLocal
+from app.infrastructure.hawk_client import HawkClient
 from app.infrastructure.http_client import HTTPClient
 from app.repositories.movie_rep import MovieRepository
 from app.repositories.user_rep import UserRepository
@@ -33,6 +34,7 @@ async def create_container() -> AsyncIterator[Container]:
         """
     session = AsyncSessionLocal()
     http_client = HTTPClient()
+    hawk_client = HawkClient()
 
     try:
         movie_repository = MovieRepository(session=session)
@@ -45,16 +47,19 @@ async def create_container() -> AsyncIterator[Container]:
             movie_repository=movie_repository,
             user_repository=user_repository,
             vk_client=vk_client,
+            hawk=hawk_client,
         )
 
         movie_service = MovieService(
             repository=movie_repository,
             kinopoisk_client=kino_client,
             notification_service=notification_service,
+            hawk=hawk_client,
         )
         user_service = UserService(
             user_repo=user_repository,
             movie_repo=movie_repository,
+            hawk=hawk_client,
         )
 
         logger.info("Создали контейнер для работы с сервисами")

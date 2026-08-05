@@ -5,6 +5,7 @@ from app.clients.kp_client import KinopoiskClient
 from app.core.config import settings
 from app.core.exceptions.exceptions import MovieNotFoundError
 from app.core.logging import get_logger
+from app.infrastructure.hawk_client import HawkClient
 from app.repositories.bases.base_movie import BaseMovieRepository
 from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
 from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
@@ -16,10 +17,17 @@ logger = get_logger(__name__)
 class MovieService:
     """Сервис для работы с Movie"""
 
-    def __init__(self, repository: BaseMovieRepository, kinopoisk_client: KinopoiskClient, notification_service: NotificationService):
+    def __init__(
+            self,
+            repository: BaseMovieRepository,
+            kinopoisk_client: KinopoiskClient,
+            notification_service: NotificationService,
+            hawk: HawkClient,
+    ):
         self._repo = repository
         self._kino_client = kinopoisk_client
         self._notify_service = notification_service
+        self._hawk = hawk
 
     async def get_all_movies(self) -> list[MovieResponse]:
         """Получить все фильмы, отдает схему"""
@@ -67,6 +75,10 @@ class MovieService:
         """Создает фильм по схеме от АПИ или Create, отдает схему"""
         movie_orm = await self._repo.create(movie.model_dump())
         logger.info(f"Фильм '{movie_orm.name}' создан, id={movie_orm.id}")
+        await self._hawk.send_event(
+            message="Фильм создан",
+            extra={"name": movie_orm.name, "id": movie_orm.id},
+        )
         return MovieResponse.model_validate(movie_orm, from_attributes=True)
 
     async def update_movie(self, movie_id: int, movie: MovieUpdate) -> MovieResponse:
@@ -86,6 +98,10 @@ class MovieService:
             logger.warning(f"Фильм с ID {movie_id} не найден при удалении")
             raise MovieNotFoundError(f"Фильм с ID {movie_id} не найден")
         logger.info(f'Удален из БД фильм с id={movie_id}')
+        await self._hawk.send_event(
+            message="Удален из БД фильм",
+            extra={"id": movie_id},
+        )
 
 
     async def check_series_updates(self) -> None:
@@ -103,7 +119,13 @@ class MovieService:
 
         logger.info(f"Найдено отслеживаемых сериалов: {len(tracked)}, ")
         await self._check_notify_all(tracked)
-
+        await self._hawk.send_event(
+            message="Проверка обновления сериалов",
+            extra={
+                "total_series": len(tracked),
+                "status": "success"
+            }
+        )
 
     async def _check_update_one(
             self,

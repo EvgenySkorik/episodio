@@ -9,6 +9,7 @@ from app.clients.vk_client import VkClient
 from app.core.config import settings
 from app.core.exceptions.exceptions import SecurityError
 from app.db.database import get_db
+from app.infrastructure.hawk_client import HawkClient
 from app.infrastructure.http_client import HTTPClient
 from app.infrastructure.security import get_current_user_impl, verify_vk_sign
 from app.repositories.movie_rep import MovieRepository
@@ -52,6 +53,10 @@ async def get_user_repository(
 # ---------------------------------------------------------------------------
 # -----------------------------Клиенты---------------------------------------
 # ---------------------------------------------------------------------------
+async def get_hawk_client(request: Request) -> HawkClient:
+    """Возвращает HawkClient из состояния приложения (синглтон)."""
+    return request.app.state.hawk_client  # type: ignore[no-any-return]
+
 
 async def get_http_client(request: Request) -> HTTPClient:
     """Возвращает HTTPClient из состояния приложения (синглтон).
@@ -76,28 +81,37 @@ async def get_notification_service(
         movie_repo: Annotated[MovieRepository, Depends(get_movie_repository)],
         user_repo: Annotated[UserRepository, Depends(get_user_repository)],
         http_client: Annotated[HTTPClient, Depends(get_http_client)],
+        hawk_client: Annotated[HawkClient, Depends(get_hawk_client)],
 ) -> NotificationService:
     vk_client = VkClient(http_client, settings=settings)
     return NotificationService(
         movie_repository=movie_repo,
         user_repository=user_repo,
         vk_client=vk_client,
+        hawk=hawk_client,
     )
 
 
 async def get_movie_service(
         movie_repo: Annotated[MovieRepository, Depends(get_movie_repository)],
         kino_client: Annotated[KinopoiskClient, Depends(get_kinopoisk_client)],
-        notify_service: Annotated[NotificationService, Depends(get_notification_service)]
+        notify_service: Annotated[NotificationService, Depends(get_notification_service)],
+        hawk_client: Annotated[HawkClient, Depends(get_hawk_client)],
 ) -> MovieService:
-    return MovieService(repository=movie_repo, kinopoisk_client=kino_client, notification_service=notify_service)
+    return MovieService(
+        repository=movie_repo,
+        kinopoisk_client=kino_client,
+        notification_service=notify_service,
+        hawk=hawk_client,
+    )
 
 
 async def get_user_service(
         user_repo: Annotated[UserRepository, Depends(get_user_repository)],
         movie_repo: Annotated[MovieRepository, Depends(get_movie_repository)],
+        hawk_client: Annotated[HawkClient, Depends(get_hawk_client)],
 ) -> UserService:
-    return UserService(user_repo=user_repo, movie_repo=movie_repo)
+    return UserService(user_repo=user_repo, movie_repo=movie_repo, hawk=hawk_client,)
 
 
 # ----------------------------------------------------------------------------

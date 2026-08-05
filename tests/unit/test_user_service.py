@@ -1,7 +1,7 @@
 import pytest
 
-from app.schemas.user_schemas import UserResponse, UserCreate, UserUpdate
 from app.core.exceptions import UserNotFoundError
+from app.schemas.user_schemas import UserCreate, UserResponse, UserUpdate
 from app.services.user import UserService
 
 

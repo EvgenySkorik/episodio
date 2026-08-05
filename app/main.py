@@ -14,12 +14,14 @@ from app.api.v1.users import users_rout
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.database import create_tables
+from app.infrastructure.hawk_client import HawkClient
 from app.infrastructure.http_client import HTTPClient
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.http_client = HTTPClient()
+    app.state.hawk_client = HawkClient()
     await create_tables()
     yield
     await app.state.http_client.close()
