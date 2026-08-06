@@ -38,5 +38,9 @@ class BaseMovieRepository(ABC):
     async def get_tracked_series(self) -> Sequence[tuple[int, int, int | None, int, str]]:
         pass
 
+    @abstractmethod
+    async def get_all_pagination(self, limit: int, offset: int) -> Sequence[Movie]:
+        pass
+
 
 

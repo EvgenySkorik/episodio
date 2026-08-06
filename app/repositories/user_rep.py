@@ -107,7 +107,7 @@ class UserRepository(BaseUserRepository):
         )
         result = (await self._session.execute(stmt)).all()
         logger.info("Получен список фильмов с рейтингом из БД")
-        return result # type: ignore[return-value]
+        return result # type: ignore
 
     async def add_movie_to_user(self, user_id: int, movie_id: int) -> bool:
         """Добавить фильм/сериал к модели User в коллекцию, только для PostgreSQL"""

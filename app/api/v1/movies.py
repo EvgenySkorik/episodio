@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, status
 from fastapi.params import Query
 
-from app.api.dependencies import ServiceMovieDep
+from app.api.dependencies import ServiceMovieDep, PaginationDep
 from app.core.logging import get_logger
 from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
 
@@ -27,6 +27,19 @@ async def get_all_movies(
     """Ручка получения списка всех фильмов"""
 
     return await service.get_all_movies()
+
+@movies_rout.get("/paginated", summary='Получить все с пагинацией')
+async def get_all_movies_paginated(
+        service: ServiceMovieDep,
+        pagination: PaginationDep,
+
+) -> list[MovieResponse]:
+    """Ручка получения списка всех фильмов"""
+    logger.info(f"МЫ ТУТУТУТ в ручке {pagination}{pagination.__class__.__name__}{PaginationDep}")
+    logger.info(f"🔍 РУЧКА: limit={pagination.limit}, page={pagination.page}, type={type(pagination)}")
+    logger.info(f"🔍 РУЧКА: pagination.model_dump() = {pagination.model_dump()}")
+
+    return await service.get_all_movies_paginated(limit=pagination.limit, page=pagination.page)
 
 @movies_rout.get("/kinopoisktoken", summary='Информация о токенах Кинопоиска')
 async def get_token_balance(
@@ -80,4 +93,6 @@ async def delete_movie(
 ) -> None:
     """Ручка удаления фильма"""
     await service.delete_movie(id)
+
+
 

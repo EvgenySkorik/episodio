@@ -95,4 +95,22 @@ class MovieRepository(BaseMovieRepository):
                 .distinct()
                 )
         result = await self._session.execute(stmt)
-        return result.all() # type: ignore[return-value]
+        return result.all()  # type: ignore[return-value]
+
+    async def get_all_pagination(self, limit: int, offset: int) -> Sequence[Movie]:
+        """
+        Получить все фильмы/сериалы с пагинацией
+        Args:
+            limit: Количество записей на странице (по умолчанию 10)
+            offset: Количество пропускаемых записей (по умолчанию 0)
+        Returns:
+            Sequence[Movie]: Список ORM-объектов для текущей страницы.
+        """
+        stmt = (
+            select(Movie)
+            .order_by(Movie.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await self._session.execute(stmt)
+        return result.scalars().all()

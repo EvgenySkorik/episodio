@@ -11,6 +11,7 @@ from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
 from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
 from app.services.notification import NotificationService
 
+
 logger = get_logger(__name__)
 
 
@@ -103,7 +104,6 @@ class MovieService:
             extra={"id": movie_id},
         )
 
-
     async def check_series_updates(self) -> None:
         """
         Основной метод для проверки обновлений сериалов.
@@ -164,7 +164,6 @@ class MovieService:
             return {"user_id": user_id, "name": name, "new_episodes": new_episodes}
         return None
 
-
     async def _check_notify_all(self, serials: Sequence) -> None:
         """
         Проверяет все отслеживаемые сериалы и отправляет уведомления.
@@ -174,7 +173,11 @@ class MovieService:
         """
         sem = asyncio.Semaphore(settings.celery.semaphore_limit)
 
-        tasks = [self._check_update_one(mov_id, kp_id, current, user_id, name, sem) for mov_id, kp_id, current, user_id, name in serials]
+        tasks = [self._check_update_one(
+            mov_id, kp_id, current, user_id, name, sem
+        )
+            for mov_id, kp_id, current, user_id, name in serials
+        ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         for result in results:
@@ -182,10 +185,22 @@ class MovieService:
                 logger.error(f"Ошибка при проверке сериала: {result}")
             elif result and isinstance(result, dict):
                 await self._notify_service.send_notification(
-                    result["user_id"], # type: ignore[arg-type]
-                    result["name"], # type: ignore[arg-type]
-                    result["new_episodes"], # type: ignore[arg-type]
+                    result["user_id"],  # type: ignore[arg-type]
+                    result["name"],  # type: ignore[arg-type]
+                    result["new_episodes"],  # type: ignore[arg-type]
                 )
 
+    async def get_all_movies_paginated(self, limit: int, page: int) -> list[MovieResponse]:
+        """Получить список фильмов с пагинацией.
 
+    Args:
+        limit: Количество записей на странице.
+        page: Страница записей.
 
+    Returns:
+        list[MovieResponse]: Список фильмов для текущей страницы.
+    """
+        offset = (page - 1) * limit
+        movies_orm = await self._repo.get_all_pagination(limit=limit, offset=offset)
+
+        return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]

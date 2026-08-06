@@ -4,6 +4,7 @@ from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.paginations import PaginationParams
 from app.clients.kp_client import KinopoiskClient
 from app.clients.vk_client import VkClient
 from app.core.config import settings
@@ -122,4 +123,6 @@ type ServiceMovieDep = Annotated[MovieService, Depends(get_movie_service)]
 type ServiceUserDep = Annotated[UserService, Depends(get_user_service)]
 type VkUserIdDep = Annotated[int, Depends(get_vk_user_id)]
 type CurrentUserVkIdDep = Annotated[int, Depends(get_current_user)]
+
+type PaginationDep = Annotated[PaginationParams, Depends()]
 

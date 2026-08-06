@@ -6,6 +6,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 load_dotenv()
 
 
+class PaginationSettings(BaseSettings):
+    default_limit: int = 10
+    default_page: int = 1
+
+
 class DatabaseSettings(BaseSettings):
     """Класс с настройками PostgreSQL"""
     server: str = "localhost"
@@ -32,6 +37,7 @@ class KinopoiskSettings(BaseSettings):
             "X-API-KEY": self.api_key,
         }
 
+
 class VkSettings(BaseSettings):
     token: str = "default"
     secret_key: str = ""
@@ -54,6 +60,7 @@ class CelerySettings(BaseSettings):
     check_series_minute: int = 6
     check_series_day: int = 2
 
+
 class AppSettings(BaseSettings):
     """Класс с общими настройками"""
     model_config = SettingsConfigDict(
@@ -67,6 +74,7 @@ class AppSettings(BaseSettings):
     kinopoisk: KinopoiskSettings = KinopoiskSettings()
     vk: VkSettings = VkSettings()
     celery: CelerySettings = CelerySettings()
+    pagination: PaginationSettings = PaginationSettings()
 
     secret_jwt_key: str = ""
     hawk_secret_token: str = ""
@@ -84,5 +92,5 @@ class AppSettings(BaseSettings):
         """Возвращает путь к файлу логов"""
         return Path(self.log_file_name)
 
-settings: AppSettings = AppSettings()
 
+settings: AppSettings = AppSettings()
