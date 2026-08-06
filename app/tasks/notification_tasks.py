@@ -13,6 +13,7 @@ logger = get_logger(__name__)
     bind=True,
     max_retries=3,
     default_retry_delay=60,
+    acks_late=True,
 )
 def send_notification_series(self: Any, user_id: int) -> None:
     """Celery задача для отправки уведомлений о новых сериях."""

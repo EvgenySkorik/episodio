@@ -13,6 +13,7 @@ logger = get_logger(__name__)
     bind=True,
     max_retries=3,
     default_retry_delay=60,
+    acks_late=True,
 )
 def check_series_updates(self: Any) -> None:
     """Celery задача для проверки обновлений эпизодов сериалов."""
