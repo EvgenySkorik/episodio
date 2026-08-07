@@ -47,8 +47,8 @@ class VkSettings(BaseSettings):
 
 class CelerySettings(BaseSettings):
     """Класс с настройками Celery, Redis"""
-    broker_url: str = "redis://localhost:6379/0"
-    result_backend: str = "redis://localhost:6379/0"
+    broker_url: str = ""
+    result_backend: str = ""
     task_serializer: str = "json"
     result_serializer: str = "json"
     accept_content: list[str] = ["json"]
@@ -78,6 +78,7 @@ class AppSettings(BaseSettings):
 
     secret_jwt_key: str = ""
     hawk_secret_token: str = ""
+    redis_password: str = ""
 
     title: str = "Episodio"
     description: str = "API для поиска и хранения фильмов и сериалов"
