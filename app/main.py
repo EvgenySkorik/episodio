@@ -34,10 +34,17 @@ app = FastAPI(
     description=settings.description,
     version=settings.version,
     lifespan=lifespan,
+    docs_url="/docs" if settings.environment == "development" else None,
+    redoc_url=None,
+    openapi_url="/openapi.json" if settings.environment == "development" else None,
 )
 
 instrumentator = Instrumentator()
-instrumentator.instrument(app).expose(app)
+instrumentator.instrument(app).expose(
+    app,
+    endpoint="/metrics",
+    include_in_schema=False
+)
 
 hawk = HawkFastapi({
     'app_instance': app,
@@ -46,10 +53,14 @@ hawk = HawkFastapi({
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://episodio.cstmarket.ru",
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 register_exception_handlers(app)

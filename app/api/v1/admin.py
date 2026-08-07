@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from app.core.config import settings
 from app.core.exceptions.exceptions import TestError
 from app.core.logging import get_logger
 from app.infrastructure.security import (
@@ -15,14 +16,15 @@ logger = get_logger(__name__)
 admin_rout = APIRouter(prefix="/admin", tags=["admin"])
 
 
-@admin_rout.get("/trigger-error")
-async def trigger_error():
-    """
-       Тестовый эндпоинт для проверки Hawk.
-       Вызывает исключение, которое должно быть отправлено в Hawk.
-       """
-    logger.warning("Вызван тестовый эндпоинт /trigger-error")
-    raise TestError("Тестовая ошибка для Hawk!")
+if settings.environment == "development":
+    @admin_rout.get("/trigger-error")
+    async def trigger_error():
+        """
+           Тестовый эндпоинт для проверки Hawk.
+           Вызывает исключение, которое должно быть отправлено в Hawk.
+           """
+        logger.warning("Вызван тестовый эндпоинт /trigger-error")
+        raise TestError("Тестовая ошибка для Hawk!")
 
 @admin_rout.post("/logs", summary="Получить логи")
 async def get_logs(

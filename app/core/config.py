@@ -84,6 +84,9 @@ class AppSettings(BaseSettings):
     description: str = "API для поиска и хранения фильмов и сериалов"
     version: str = "2.0.0"
 
+    environment: str = "production"  # "development" или "production"
+    cors_origins: list[str] = ["https://episodio.cstmarket.ru"]
+
     log_file_name: str = "KinoMovieApi.log"
     logs_password: str = ""
     log_level: str = "INFO"
