@@ -31,7 +31,7 @@ class BaseMovieRepository(ABC):
         pass
 
     @abstractmethod
-    async def search_by_query(self, query: str, limit: int = 10) -> Sequence[Movie]:
+    async def search_by_query(self, query: str, limit: int) -> Sequence[Movie]:
         pass
 
     @abstractmethod
@@ -40,6 +40,10 @@ class BaseMovieRepository(ABC):
 
     @abstractmethod
     async def get_all_pagination(self, limit: int, offset: int) -> Sequence[Movie]:
+        pass
+
+    @abstractmethod
+    async def get_popular(self, limit: int) -> Sequence[Movie]:
         pass
 
 

@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -70,13 +70,14 @@ class MovieRepository(BaseMovieRepository):
         logger.info(f"Удалён Movie id={movie_id} из БД")
         return True
 
-    async def search_by_query(self, query: str, limit: int = 10) -> Sequence[Movie]:
+    async def search_by_query(self, query: str, limit: int) -> Sequence[Movie]:
         """Получить список ORM-объектов фильмов по совпадению имени из БД с лимитом."""
         result = await self._session.execute(
             select(Movie)
             .where(Movie.name.ilike(f"%{query}%"))
             .limit(limit)
         )
+        logger.info(f"Получен список объектов по query={query}, limit={limit}")
         return result.scalars().all()
 
     async def get_tracked_series(self) -> Sequence[tuple[int, int, int | None, int, str]]:
@@ -95,6 +96,7 @@ class MovieRepository(BaseMovieRepository):
                 .distinct()
                 )
         result = await self._session.execute(stmt)
+        logger.info(f"Получен список объектов которые отслеживает пользователь")
         return result.all()  # type: ignore[return-value]
 
     async def get_all_pagination(self, limit: int, offset: int) -> Sequence[Movie]:
@@ -113,4 +115,27 @@ class MovieRepository(BaseMovieRepository):
             .offset(offset)
         )
         result = await self._session.execute(stmt)
+        logger.info(f"Получен список объектов с пагинацией")
+        return result.scalars().all()
+
+    async def get_popular(self, limit: int) -> Sequence[Movie]:
+        """
+        Получить все популярные фильмы/сериалы с пагинацией
+        Args:
+            limit: Количество записей на странице (по умолчанию 20)
+        Returns:
+            Sequence[Movie]: Список ORM-объектов для текущей страницы.
+        """
+        stmt = (
+            select(Movie)
+            .join(UserMovie, UserMovie.movie_id == Movie.id)
+            .where(UserMovie.user_rating > 0)
+            .group_by(Movie.id)
+            .having(func.avg(UserMovie.user_rating) > 8.0)
+            .order_by(func.count(UserMovie.user_id).desc())
+            .limit(limit)
+        )
+
+        result = await self._session.execute(stmt)
+        logger.info(f"Получен список объектов по всем User с рейтингом выше 8,0")
         return result.scalars().all()

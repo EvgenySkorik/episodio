@@ -34,12 +34,16 @@ async def get_all_movies_paginated(
         pagination: PaginationDep,
 
 ) -> list[MovieResponse]:
-    """Ручка получения списка всех фильмов"""
-    logger.info(f"МЫ ТУТУТУТ в ручке {pagination}{pagination.__class__.__name__}{PaginationDep}")
-    logger.info(f"🔍 РУЧКА: limit={pagination.limit}, page={pagination.page}, type={type(pagination)}")
-    logger.info(f"🔍 РУЧКА: pagination.model_dump() = {pagination.model_dump()}")
-
+    """Ручка получения списка всех фильмов с пагинацией"""
     return await service.get_all_movies_paginated(limit=pagination.limit, page=pagination.page)
+@movies_rout.get("/popular", summary='Получить все популярные')
+async def get_all_movies_popular(
+        service: ServiceMovieDep,
+        limit: int = Query(20, ge=1, le=100, description="Сколько фильмов вернуть"),
+
+) -> list[MovieResponse]:
+    """Ручка получения списка всех популярных фильмов с limit(default)=20"""
+    return await service.get_all_movies_popular(limit=limit)
 
 @movies_rout.get("/kinopoisktoken", summary='Информация о токенах Кинопоиска')
 async def get_token_balance(

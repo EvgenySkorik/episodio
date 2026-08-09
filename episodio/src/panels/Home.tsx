@@ -20,6 +20,8 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
     const [showSearch, setShowSearch] = useState(false);
     const token = localStorage.getItem('jwt');
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+    const [mode, setMode] = useState<'collection' | 'popular'>('collection');
+    const [popularMovies, setPopularMovies] = useState<any[]>([]);
 
     useEffect(() => {
         if (toast) {
@@ -41,6 +43,19 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
         };
         fetchMovies();
     }, [vkId]);
+
+    const fetchPopularMovies = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/movies/popular?limit=20');
+            const data = await response.json();
+            setPopularMovies(data);
+        } catch (error) {
+            console.error('Ошибка загрузки популярных:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleSearch = async () => {
         if (!query.trim()) return;
@@ -147,6 +162,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
 
     return (
         <div className="min-h-screen bg-gray-950 text-white p-4 space-y-6">
+            {/* Toast уведомления */}
             {toast && (
                 <div
                     className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-lg text-white text-sm font-medium transition-all duration-300 ${
@@ -156,11 +172,34 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                 </div>
             )}
 
+            {/* Заголовок */}
             <div className="flex items-center gap-3">
                 <Tv className="w-8 h-8 text-red-600"/>
                 <h1 className="text-2xl font-bold tracking-tight">Episodio</h1>
             </div>
 
+            {/* Навигация: Моя коллекция / Популярное */}
+            <div className="flex gap-2">
+                <Button
+                    variant={mode === 'collection' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setMode('collection')}
+                >
+                    <Bookmark className="w-4 h-4 mr-1"/> Моя коллекция
+                </Button>
+                <Button
+                    variant={mode === 'popular' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => {
+                        setMode('popular');
+                        fetchPopularMovies();
+                    }}
+                >
+                    <Star className="w-4 h-4 mr-1 fill-yellow-500 text-yellow-500"/> Популярное
+                </Button>
+            </div>
+
+            {/* Поиск */}
             <div className="flex gap-2">
                 <Input
                     type="text"
@@ -175,6 +214,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                 </Button>
             </div>
 
+            {/* Результаты поиска */}
             {showSearch && (
                 <div className="space-y-4">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -212,7 +252,8 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                 </div>
             )}
 
-            {!showSearch && (
+            {/* Моя коллекция */}
+            {!showSearch && mode === 'collection' && (
                 <div className="space-y-4">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
                         <Bookmark className="w-5 h-5"/> Моя коллекция
@@ -250,7 +291,11 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                                                 value={[movie.user_rating || 0]}
                                                 max={10}
                                                 step={0.5}
-                                                onValueChange={([value]) => rateMovie(movie.id, value)}
+                                                onValueChange={([value]) => {
+                                                }}
+                                                onValueCommit={([value]) => {
+                                                    rateMovie(movie.id, value);
+                                                }}
                                                 className="w-full"
                                             />
                                         </div>
@@ -279,7 +324,51 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                     )}
                 </div>
             )}
+
+            {/* Популярное */}
+            {!showSearch && mode === 'popular' && (
+                <div className="space-y-4">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <Star className="w-5 h-5 fill-yellow-500 text-yellow-500"/> Популярное
+                    </h2>
+                    {popularMovies.length === 0 ? (
+                        <p className="text-gray-500">Нет популярных фильмов</p>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {popularMovies.map((movie: any) => (
+                                <Card key={movie.id}
+                                      className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
+                                    <CardContent className="p-3 space-y-2">
+                                        <img
+                                            src={movie.poster}
+                                            alt={movie.name}
+                                            className="w-full aspect-[2/3] object-cover rounded-lg cursor-pointer"
+                                            onClick={() => openMovie(movie.id, false)}
+                                        />
+                                        <h3 className="font-medium truncate">{movie.name}</h3>
+                                        <p className="text-xs text-gray-400">
+                                            {movie.year} • ⭐ {movie.rating_kp ?? '—'}
+                                        </p>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="w-full"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddToCollection(movie.id);
+                                            }}
+                                        >
+                                            <Plus className="w-4 h-4"/> Сохранить
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
-};
+    ;
+}
 export default Home;

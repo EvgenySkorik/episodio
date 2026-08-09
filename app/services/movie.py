@@ -46,8 +46,17 @@ class MovieService:
         return MovieResponse.model_validate(movie_orm, from_attributes=True)
 
     async def get_movie_by_name(self, movie_name: str) -> list[MovieResponse]:
-        """Получить фильм по названию, отдает список схем"""
-        movies_orm = await self._repo.search_by_query(movie_name, limit=5)
+        """
+        Получить фильм(ы) по названию (регистронезависимый поиск).
+        Передаёт в репозиторий лимит **limit=10** — достаточно для подсказок
+            в поисковой строке. Если совпадений нет, возвращается пустой список.
+        Args:
+            movie_name: Поисковый запрос (часть названия).
+
+        Returns:
+            list[MovieResponse]: Список схем фильмов (от 0 до 10 элементов).
+        """
+        movies_orm = await self._repo.search_by_query(movie_name, limit=10)
         if movies_orm:
             logger.info(f"Фильм '{movie_name}' найден в БД")
             return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
@@ -194,7 +203,7 @@ class MovieService:
         """Получить список фильмов с пагинацией.
 
     Args:
-        limit: Количество записей на странице.
+        limit: Количество записей на странице,
         page: Страница записей.
 
     Returns:
@@ -202,5 +211,19 @@ class MovieService:
     """
         offset = (page - 1) * limit
         movies_orm = await self._repo.get_all_pagination(limit=limit, offset=offset)
+
+        return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
+
+    async def get_all_movies_popular(self, limit: int) -> list[MovieResponse]:
+        """Получить список популярных фильмов с лимитом.
+
+    Args:
+        limit: Максимальное количество фильмов в ответе
+
+    Returns:
+        list[MovieResponse]: Список схем популярных фильмов.
+    """
+
+        movies_orm = await self._repo.get_popular(limit=limit)
 
         return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
