@@ -58,7 +58,7 @@ class CelerySettings(BaseSettings):
     semaphore_timeout_rps: float = 0.2
     check_series_hour: int = 6
     check_series_minute: int = 6
-    check_series_day: int = 2
+    check_series_day: int = 1
 
 
 class AppSettings(BaseSettings):

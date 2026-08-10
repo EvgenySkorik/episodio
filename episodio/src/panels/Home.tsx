@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import {Search, Bookmark, Star, Tv, Plus} from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
@@ -22,6 +22,9 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [mode, setMode] = useState<'collection' | 'popular'>('collection');
     const [popularMovies, setPopularMovies] = useState<any[]>([]);
+    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const collectionVariant: 'default' | 'outline' = mode === 'collection' ? 'default' : 'outline';
+    const popularVariant: 'default' | 'outline' = mode === 'popular' ? 'default' : 'outline';
 
     useEffect(() => {
         if (toast) {
@@ -181,18 +184,18 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
             {/* Навигация: Моя коллекция / Популярное */}
             <div className="flex gap-2">
                 <Button
-                    variant={mode === 'collection' ? 'default' : 'outline'}
+                    variant={collectionVariant}
                     size="sm"
                     onClick={() => setMode('collection')}
                 >
                     <Bookmark className="w-4 h-4 mr-1"/> Моя коллекция
                 </Button>
                 <Button
-                    variant={mode === 'popular' ? 'default' : 'outline'}
+                    variant={popularVariant}
                     size="sm"
                     onClick={() => {
                         setMode('popular');
-                        fetchPopularMovies();
+                        fetchPopularMovies().catch(console.error);
                     }}
                 >
                     <Star className="w-4 h-4 mr-1 fill-yellow-500 text-yellow-500"/> Популярное
@@ -236,7 +239,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                                             ⭐ {movie.rating_kp ?? '—'}</p>
                                         <Button size="sm" variant="outline" className="w-full" onClick={(e) => {
                                             e.stopPropagation();
-                                            handleAddToCollection(movie.id);
+                                            handleAddToCollection(movie.id).catch(console.error);
                                         }}>
                                             <Plus className="w-4 h-4"/> Сохранить
                                         </Button>
@@ -292,11 +295,14 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                                                 max={10}
                                                 step={0.5}
                                                 onValueChange={([value]) => {
+                                                    if (debounceTimer.current) {
+                                                        clearTimeout(debounceTimer.current);
+                                                    }
+                                                    debounceTimer.current = setTimeout(() => {
+                                                        rateMovie(movie.id, value).catch(console.error);
+                                                    }, 500);
                                                 }}
-                                                onValueCommit={([value]) => {
-                                                    rateMovie(movie.id, value);
-                                                }}
-                                                className="w-full"
+                                                className="w-full relative z-10"
                                             />
                                         </div>
 
@@ -308,7 +314,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                                                     className="h-8 w-8 p-0"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        toggleTracking(movie.id, movie.is_tracking);
+                                                        toggleTracking(movie.id, movie.is_tracking).catch(console.error);
                                                     }}
                                                 >
                                                     <Tv className={`w-4 h-4 transition-colors ${
@@ -355,7 +361,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                                             className="w-full"
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleAddToCollection(movie.id);
+                                                handleAddToCollection(movie.id).catch(console.error);
                                             }}
                                         >
                                             <Plus className="w-4 h-4"/> Сохранить
@@ -369,6 +375,5 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
             )}
         </div>
     );
-    ;
 }
 export default Home;
