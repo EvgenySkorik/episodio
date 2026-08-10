@@ -11,7 +11,6 @@ from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
 from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
 from app.services.notification import NotificationService
 
-
 logger = get_logger(__name__)
 
 

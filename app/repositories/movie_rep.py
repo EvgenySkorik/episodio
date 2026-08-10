@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
@@ -96,7 +96,7 @@ class MovieRepository(BaseMovieRepository):
                 .distinct()
                 )
         result = await self._session.execute(stmt)
-        logger.info(f"Получен список объектов которые отслеживает пользователь")
+        logger.info("Получен список объектов которые отслеживает пользователь")
         return result.all()  # type: ignore[return-value]
 
     async def get_all_pagination(self, limit: int, offset: int) -> Sequence[Movie]:
@@ -115,7 +115,7 @@ class MovieRepository(BaseMovieRepository):
             .offset(offset)
         )
         result = await self._session.execute(stmt)
-        logger.info(f"Получен список объектов с пагинацией")
+        logger.info("Получен список объектов с пагинацией")
         return result.scalars().all()
 
     async def get_popular(self, limit: int) -> Sequence[Movie]:
@@ -137,5 +137,5 @@ class MovieRepository(BaseMovieRepository):
         )
 
         result = await self._session.execute(stmt)
-        logger.info(f"Получен список объектов по всем User с рейтингом выше 8,0")
+        logger.info("Получен список объектов по всем User с рейтингом выше 8,0")
         return result.scalars().all()

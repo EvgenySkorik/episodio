@@ -1,3 +1,6 @@
+import asyncio
+import atexit
+import signal
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -18,6 +21,34 @@ from app.services.user import UserService
 logger = get_logger(__name__)
 
 
+_http_client: HTTPClient | None = None
+_hawk_client: HawkClient | None = None
+
+def get_http_client() -> HTTPClient:
+    global _http_client
+    if _http_client is None:
+        _http_client = HTTPClient()
+    return _http_client
+
+def get_hawk_client() -> HawkClient:
+    global _hawk_client
+    if _hawk_client is None:
+        _hawk_client = HawkClient()
+    return _hawk_client
+
+def _cleanup():
+    """Закрываем ресурсы при остановке процесса."""
+    loop = asyncio.new_event_loop()
+    try:
+        if _http_client is not None:
+            loop.run_until_complete(_http_client.close())
+    finally:
+        loop.close()
+
+atexit.register(_cleanup)
+signal.signal(signal.SIGTERM, lambda *args: _cleanup())
+
+
 @dataclass(slots=True)
 class Container:
     """Контейнер всех сервисов приложения."""
@@ -30,11 +61,10 @@ class Container:
 async def create_container() -> AsyncIterator[Container]:
     """Создаёт контейнер со всеми сервисами.
         Одна сессия и один HTTPClient на все сервисы.
-        Автоматически закрывает ресурсы.
         """
     session = AsyncSessionLocal()
-    http_client = HTTPClient()
-    hawk_client = HawkClient()
+    http_client = get_http_client()
+    hawk_client = get_hawk_client()
 
     try:
         movie_repository = MovieRepository(session=session)
@@ -62,7 +92,7 @@ async def create_container() -> AsyncIterator[Container]:
             hawk=hawk_client,
         )
 
-        logger.info("Создали контейнер для работы с сервисами")
+        logger.info("Создан контейнер для работы с сервисами")
         yield Container(
             movie_service=movie_service,
             user_service=user_service,
@@ -71,4 +101,3 @@ async def create_container() -> AsyncIterator[Container]:
 
     finally:
         await session.close()
-        await http_client.close()

@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, status
 from fastapi.params import Query
 
-from app.api.dependencies import ServiceMovieDep, PaginationDep
+from app.api.dependencies import PaginationDep, ServiceMovieDep
 from app.core.logging import get_logger
 from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
 
@@ -39,7 +39,7 @@ async def get_all_movies_paginated(
 @movies_rout.get("/popular", summary='Получить все популярные')
 async def get_all_movies_popular(
         service: ServiceMovieDep,
-        limit: int = Query(20, ge=1, le=100, description="Сколько фильмов вернуть"),
+        limit: Annotated[int, Query(20, ge=1, le=100, description="Сколько фильмов вернуть")] = 20,
 
 ) -> list[MovieResponse]:
     """Ручка получения списка всех популярных фильмов с limit(default)=20"""
