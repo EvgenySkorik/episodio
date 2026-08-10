@@ -28,12 +28,14 @@ def get_http_client() -> HTTPClient:
     global _http_client
     if _http_client is None:
         _http_client = HTTPClient()
+    logger.debug("Возвращаем http_client")
     return _http_client
 
 def get_hawk_client() -> HawkClient:
     global _hawk_client
     if _hawk_client is None:
         _hawk_client = HawkClient()
+    logger.debug("Возвращаем hawk_client")
     return _hawk_client
 
 def _cleanup():
@@ -42,6 +44,7 @@ def _cleanup():
     try:
         if _http_client is not None:
             loop.run_until_complete(_http_client.close())
+            logger.debug("http_client закрыт!")
     finally:
         loop.close()
 
