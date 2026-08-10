@@ -1,9 +1,6 @@
 from pathlib import Path
 
-from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-load_dotenv()
 
 
 class PaginationSettings(BaseSettings):
@@ -13,10 +10,10 @@ class PaginationSettings(BaseSettings):
 
 class DatabaseSettings(BaseSettings):
     """Класс с настройками PostgreSQL"""
-    server: str = "localhost"
-    user: str = "postgres"
-    password: str = "postgres234"
-    db: str = "kinomovie"
+    server: str = ""
+    user: str = ""
+    password: str = ""
+    db: str = ""
 
     @property
     def url(self) -> str:
