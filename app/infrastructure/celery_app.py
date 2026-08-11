@@ -2,8 +2,6 @@ from celery import Celery
 from celery.schedules import crontab
 
 from app.core.config import settings
-import app.tasks.movie_tasks
-import app.tasks.notification_tasks
 
 celery_app = Celery(
     "kino_movie_api",
