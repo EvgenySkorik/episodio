@@ -11,7 +11,7 @@ celery_app = Celery(
     backend=settings.celery.result_backend,
 )
 
-celery_app.autodiscover_tasks(['app.tasks'])
+celery_app.autodiscover_tasks(['app.tasks.movie_tasks', 'app.tasks.notification_tasks'])
 
 celery_app.conf.update(
     task_serializer=settings.celery.task_serializer,
