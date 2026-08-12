@@ -22,7 +22,7 @@ celery_app.conf.update(
 
 celery_app.conf.beat_schedule = {
     'check-new-series': {
-        'task': 'app.tasks.movie_tasks.check_series_updates',
+        'task': 'check_series_updates',
         'schedule': crontab(
             hour=settings.celery.check_series_hour,
             minute=settings.celery.check_series_minute,
