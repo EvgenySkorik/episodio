@@ -58,8 +58,8 @@ def _cleanup():
         if _redis_client is not None:
             loop.run_until_complete(_redis_client.close())
             logger.debug("redis_client закрыт!")
-    except Exception as e:
-        logger.debug("Уже закрыт")
+    except (TimeoutError, ConnectionError, OSError) as e:
+        logger.debug(f"Уже закрыт или ошибка {e}")
     finally:
         loop.close()
 

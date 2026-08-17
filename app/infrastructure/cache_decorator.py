@@ -1,6 +1,8 @@
 import json
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable
+
+from redis.exceptions import ConnectionError, TimeoutError
 
 from app.core.logging import get_logger
 
@@ -25,7 +27,7 @@ def cached(ttl: int = 60, key_prefix: str = ""):
                 if cached_value:
                     logger.debug(f"Кеш-хит: {cache_key}")
                     return json.loads(cached_value)
-            except Exception as e:
+            except (ConnectionError, TimeoutError, json.JSONDecodeError) as e:
                 logger.warning(f"Ошибка чтения из кеша: {e}")
 
             result = await func(*args, **kwargs)
@@ -42,7 +44,7 @@ def cached(ttl: int = 60, key_prefix: str = ""):
                     json_result = result
                 await cached_client.setex(cache_key, ttl, json.dumps(json_result, default=str))
                 logger.debug(f"Кеш сохранён: {cache_key} (TTL={ttl}с)")
-            except Exception as e:
+            except (ConnectionError, TimeoutError) as e:
                 logger.warning(f"Ошибка записи в кеш: {e}")
 
             return result

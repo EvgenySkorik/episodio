@@ -38,7 +38,8 @@ async def get_all_movies_paginated(
 
 ) -> list[MovieResponse]:
     """Ручка получения списка всех фильмов с пагинацией"""
-    return await service.get_all_movies_paginated(limit=pagination.limit, page=pagination.page)
+    result: list[MovieResponse] = await service.get_all_movies_paginated(limit=pagination.limit, page=pagination.page)
+    return result
 
 
 @movies_rout.get("/popular", summary='Получить все популярные')
@@ -48,7 +49,8 @@ async def get_all_movies_popular(
 
 ) -> list[MovieResponse]:
     """Ручка получения списка всех популярных фильмов с limit(default)=20"""
-    return await service.get_all_movies_popular(limit=limit)
+    result: list[MovieResponse] = await service.get_all_movies_popular(limit=limit)
+    return result
 
 
 @movies_rout.get("/kinopoisktoken", summary='Информация о токенах Кинопоиска')

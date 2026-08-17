@@ -14,7 +14,7 @@ from app.api.v1.users import users_rout
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.database import create_tables
-from app.factories import get_http_client, get_hawk_client, get_redis_client
+from app.factories import get_hawk_client, get_http_client, get_redis_client
 
 
 @asynccontextmanager

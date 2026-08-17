@@ -1,11 +1,7 @@
-import json
-from functools import wraps
-from typing import Callable
 
 from redis.asyncio import Redis
 from redis.asyncio.retry import Retry
 from redis.backoff import ExponentialBackoff
-
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -17,7 +13,7 @@ class RedisCacheClient:
     """Клиент для работы с Redis."""
     def __init__(self):
         retry = Retry(ExponentialBackoff(), 3)
-        self._redis = Redis.from_url(
+        self._redis: Redis = Redis.from_url(
             f"redis://:{settings.redis_password}@redis:6379/1",
             decode_responses=True,
             retry=retry,
