@@ -18,7 +18,7 @@ def cached(ttl: int = 60, key_prefix: str = ""):
             cached_client = self._redis
 
             key_parts = [key_prefix or func.__name__]
-            key_parts.extend(str(a).lower() for a in args[1:])
+            key_parts.extend(str(a).lower() for a in args)
             key_parts.extend(f"{k}={str(v).lower()}" for k, v in sorted(kwargs.items()))
             cache_key = ":".join(key_parts)
 

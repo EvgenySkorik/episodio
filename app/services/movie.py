@@ -39,7 +39,6 @@ class MovieService:
         logger.info(f"Получен список всех фильмов, количество: {len(movies_orm)}")
         return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
 
-    @cached(ttl=300)
     async def get_movie_by_id(self, movie_id: int) -> MovieResponse:
         """Получить фильм по ID, отдает схему"""
         movie_orm = await self._repo.get_by_id(movie_id)
