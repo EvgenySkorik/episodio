@@ -21,10 +21,10 @@ from app.services.user import UserService
 
 logger = get_logger(__name__)
 
-
 _http_client: HTTPClient | None = None
 _hawk_client: HawkClient | None = None
 _redis_client: RedisCacheClient | None = None
+
 
 def get_http_client() -> HTTPClient:
     global _http_client
@@ -33,6 +33,7 @@ def get_http_client() -> HTTPClient:
     logger.debug("Возвращаем http_client")
     return _http_client
 
+
 def get_hawk_client() -> HawkClient:
     global _hawk_client
     if _hawk_client is None:
@@ -40,31 +41,13 @@ def get_hawk_client() -> HawkClient:
     logger.debug("Возвращаем hawk_client")
     return _hawk_client
 
+
 def get_redis_client() -> RedisCacheClient:
     global _redis_client
     if _redis_client is None:
         _redis_client = RedisCacheClient()
         logger.info("Возвращаем redis_client")
     return _redis_client
-
-def _cleanup():
-    """Закрываем ресурсы при остановке процесса."""
-    loop = asyncio.new_event_loop()
-    try:
-        if _http_client is not None:
-            loop.run_until_complete(_http_client.close())
-            logger.debug("http_client закрыт!")
-
-        if _redis_client is not None:
-            loop.run_until_complete(_redis_client.close())
-            logger.debug("redis_client закрыт!")
-    except (TimeoutError, ConnectionError, OSError) as e:
-        logger.debug(f"Уже закрыт или ошибка {e}")
-    finally:
-        loop.close()
-
-atexit.register(_cleanup)
-signal.signal(signal.SIGTERM, lambda *args: _cleanup())
 
 
 @dataclass(slots=True)
