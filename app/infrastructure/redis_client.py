@@ -11,7 +11,7 @@ logger = get_logger(__name__)
 
 class RedisCacheClient:
     """Клиент для работы с Redis."""
-    def __init__(self):
+    def __init__(self) -> None:
         retry = Retry(ExponentialBackoff(), 3)
         self._redis: Redis = Redis.from_url(
             f"redis://:{settings.redis_password}@redis:6379/1",
