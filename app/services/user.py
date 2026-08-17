@@ -129,7 +129,7 @@ class UserService:
                 is_tracking=user_movie.is_tracking or False,
             )
             movies.append(mov_with_rait)
-            logger.info("Получен список фильмов пользователя по vk_id")
+        logger.info("Получен список фильмов пользователя по vk_id")
         return movies
 
 

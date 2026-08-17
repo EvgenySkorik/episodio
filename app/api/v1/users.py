@@ -15,6 +15,7 @@ async def create_user(
     user_data: UserCreate,
     service: ServiceUserDep,
 ):
+    """Создание пользователя"""
     return await service.create_user(user_data)
 
 @users_rout.get("/me", summary='Получить текущего пользователя по VK ID', response_model=UserResponse)
@@ -23,6 +24,7 @@ async def get_me(
     vk_id: CurrentUserVkIdDep,
 
 ):
+    """Получение текущего пользователя"""
     return await service.get_or_create_user(vk_id)
 
 
@@ -31,6 +33,7 @@ async def get_my_movies(
     vk_id: CurrentUserVkIdDep,
     service: ServiceUserDep,
 ):
+    """Получить фильмы/сериалы по VK ID"""
     return await service.get_user_movies_with_rating(vk_id)
 
 
@@ -41,6 +44,7 @@ async def add_movie_to_collection(
     movie_id: int,
 
 ):
+    """Добавление фильма/сериала в коллекцию"""
     return await service.add_movie_to_collection(vk_id, movie_id)
 
 @users_rout.delete("/me/movies/{movie_id}", summary='Удалить фильм из коллекции')
@@ -49,6 +53,7 @@ async def delete_movie_from_collection(
     movie_id: int,
     service: ServiceUserDep,
 ):
+    """Удаление фильма/сериала в коллекцию"""
     await service.delete_movie_from_collection(vk_id, movie_id)
 
 @users_rout.put("/me/movies/{movie_id}/rating", summary='Оценить фильм')
@@ -58,6 +63,7 @@ async def rate_movie(
     rating_data: RatingSchema,
     service: ServiceUserDep,
 ):
+    """Оценить фильм/сериал"""
     return await service.rate_movie(vk_id, movie_id, rating_data.rating)
 
 @users_rout.put("/me/movies/{movie_id}/track", summary='Отслеживание сериала')
@@ -67,6 +73,7 @@ async def toggle_tracking(
     track_data: TrackingSchema,
     service: ServiceUserDep,
 ):
+    """Отслеживание сериала"""
     return await service.toggle_movie_tracking(vk_id, movie_id, track_data.is_tracking)
 
 @users_rout.get("/{user_id}", summary='Получить по ID', response_model=UserResponse)
@@ -74,6 +81,7 @@ async def get_user(
     user_id: int,
     service: ServiceUserDep,
 ):
+    """Получить пользователя по ID"""
     return await service.get_user_by_id(user_id)
 
 
@@ -83,6 +91,7 @@ async def update_user(
     user_data: UserUpdate,
     service: ServiceUserDep,
 ):
+    """Обновить пользователя по ID"""
     return await service.update_user(user_id, user_data)
 
 @users_rout.delete("/{user_id}", summary='Удалить пользователя', status_code=status.HTTP_204_NO_CONTENT)
@@ -90,5 +99,6 @@ async def delete_user(
     user_id: int,
     service: ServiceUserDep,
 ):
+    """Удалить пользователя по ID"""
     await service.delete_user(user_id)
 

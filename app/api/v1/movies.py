@@ -18,6 +18,7 @@ async def search_movie(
         service: ServiceMovieDep,
         q: Annotated[str, Query(..., min_length=1)],
 ):
+    """Поиск фильма/сериала по названию"""
     return await service.get_movie_by_name(q)
 
 
