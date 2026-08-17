@@ -30,7 +30,7 @@ def cached(ttl: int = 60, key_prefix: str = ""):
             except (ConnectionError, TimeoutError, json.JSONDecodeError) as e:
                 logger.warning(f"Ошибка чтения из кеша: {e}")
 
-            result = await func(*args, **kwargs)
+            result = await func(self, *args, **kwargs)
 
             if result is None or result == []:
                 return result
