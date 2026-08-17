@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.paginations import PaginationParams
@@ -12,6 +13,7 @@ from app.core.exceptions.exceptions import SecurityError
 from app.db.database import get_db
 from app.infrastructure.hawk_client import HawkClient
 from app.infrastructure.http_client import HTTPClient
+from app.infrastructure.redis_client import RedisCacheClient
 from app.infrastructure.security import get_current_user_impl, verify_vk_sign
 from app.repositories.movie_rep import MovieRepository
 from app.repositories.user_rep import UserRepository
@@ -73,6 +75,10 @@ async def get_kinopoisk_client(
 ) -> KinopoiskClient:
     return KinopoiskClient(settings=settings, http_client=http_client)
 
+async def get_redis_client(request: Request) -> RedisCacheClient:
+    """Возвращает Redis-клиент из состояния приложения (синглтон)."""
+    return request.app.state.redis_client # type: ignore[no-any-return]
+
 
 # ---------------------------------------------------------------------------
 # -----------------------------Сервисы---------------------------------------
@@ -98,12 +104,14 @@ async def get_movie_service(
         kino_client: Annotated[KinopoiskClient, Depends(get_kinopoisk_client)],
         notify_service: Annotated[NotificationService, Depends(get_notification_service)],
         hawk_client: Annotated[HawkClient, Depends(get_hawk_client)],
+        redis_client: Annotated[RedisCacheClient, Depends(get_redis_client)],
 ) -> MovieService:
     return MovieService(
         repository=movie_repo,
         kinopoisk_client=kino_client,
         notification_service=notify_service,
         hawk=hawk_client,
+        cached_client=redis_client,
     )
 
 

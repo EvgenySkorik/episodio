@@ -12,6 +12,7 @@ from app.core.logging import get_logger
 from app.db.database import AsyncSessionLocal
 from app.infrastructure.hawk_client import HawkClient
 from app.infrastructure.http_client import HTTPClient
+from app.infrastructure.redis_client import RedisCacheClient
 from app.repositories.movie_rep import MovieRepository
 from app.repositories.user_rep import UserRepository
 from app.services.movie import MovieService
@@ -23,6 +24,7 @@ logger = get_logger(__name__)
 
 _http_client: HTTPClient | None = None
 _hawk_client: HawkClient | None = None
+_redis_client: RedisCacheClient | None = None
 
 def get_http_client() -> HTTPClient:
     global _http_client
@@ -38,6 +40,13 @@ def get_hawk_client() -> HawkClient:
     logger.debug("Возвращаем hawk_client")
     return _hawk_client
 
+def get_redis_client() -> RedisCacheClient:
+    global _redis_client
+    if _redis_client is None:
+        _redis_client = RedisCacheClient()
+        logger.info("Возвращаем redis_client")
+    return _redis_client
+
 def _cleanup():
     """Закрываем ресурсы при остановке процесса."""
     loop = asyncio.new_event_loop()
@@ -45,6 +54,12 @@ def _cleanup():
         if _http_client is not None:
             loop.run_until_complete(_http_client.close())
             logger.debug("http_client закрыт!")
+
+        if _redis_client is not None:
+            loop.run_until_complete(_redis_client.close())
+            logger.debug("redis_client закрыт!")
+    except Exception as e:
+        logger.debug("Уже закрыт")
     finally:
         loop.close()
 
@@ -68,6 +83,7 @@ async def create_container() -> AsyncIterator[Container]:
     session = AsyncSessionLocal()
     http_client = get_http_client()
     hawk_client = get_hawk_client()
+    redis_client = get_redis_client()
 
     try:
         movie_repository = MovieRepository(session=session)
@@ -88,6 +104,7 @@ async def create_container() -> AsyncIterator[Container]:
             kinopoisk_client=kino_client,
             notification_service=notification_service,
             hawk=hawk_client,
+            cached_client=redis_client,
         )
         user_service = UserService(
             user_repo=user_repository,

@@ -5,7 +5,9 @@ from app.clients.kp_client import KinopoiskClient
 from app.core.config import settings
 from app.core.exceptions.exceptions import MovieNotFoundError
 from app.core.logging import get_logger
+from app.infrastructure.cache_decorator import cached
 from app.infrastructure.hawk_client import HawkClient
+from app.infrastructure.redis_client import RedisCacheClient
 from app.repositories.bases.base_movie import BaseMovieRepository
 from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
 from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
@@ -23,11 +25,13 @@ class MovieService:
             kinopoisk_client: KinopoiskClient,
             notification_service: NotificationService,
             hawk: HawkClient,
+            cached_client: RedisCacheClient,
     ):
         self._repo = repository
         self._kino_client = kinopoisk_client
         self._notify_service = notification_service
         self._hawk = hawk
+        self._redis = cached_client
 
     async def get_all_movies(self) -> list[MovieResponse]:
         """Получить все фильмы, отдает схему"""
@@ -35,6 +39,7 @@ class MovieService:
         logger.info(f"Получен список всех фильмов, количество: {len(movies_orm)}")
         return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
 
+    @cached(ttl=300)
     async def get_movie_by_id(self, movie_id: int) -> MovieResponse:
         """Получить фильм по ID, отдает схему"""
         movie_orm = await self._repo.get_by_id(movie_id)
@@ -44,6 +49,7 @@ class MovieService:
         logger.info(f"Получен фильм: id={movie_orm.id}, name='{movie_orm.name}'")
         return MovieResponse.model_validate(movie_orm, from_attributes=True)
 
+    @cached(ttl=300)
     async def get_movie_by_name(self, movie_name: str) -> list[MovieResponse]:
         """
         Получить фильм(ы) по названию (регистронезависимый поиск).
@@ -198,6 +204,7 @@ class MovieService:
                     result["new_episodes"],  # type: ignore[arg-type]
                 )
 
+    @cached(ttl=60)
     async def get_all_movies_paginated(self, limit: int, page: int) -> list[MovieResponse]:
         """Получить список фильмов с пагинацией.
 
@@ -213,6 +220,7 @@ class MovieService:
 
         return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
 
+    @cached(ttl=1800)
     async def get_all_movies_popular(self, limit: int) -> list[MovieResponse]:
         """Получить список популярных фильмов с лимитом.
 
