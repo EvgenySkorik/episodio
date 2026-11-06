@@ -3,6 +3,10 @@ import vkBridge from '@vkontakte/vk-bridge';
 import Home from './panels/Home';
 import MovieDetail from './panels/MovieDetail';
 
+// ДЛЯ ЛОКАЛКИ!!! ----
+const API_URL = 'http://localhost:8000';
+// ДЛЯ ЛОКАЛКИ!!! ----
+
 export const App = () => {
     const [isInCollection, setIsInCollection] = useState<boolean>(false);
     const [activePanel, setActivePanel] = useState<string>('home');
@@ -14,6 +18,27 @@ export const App = () => {
 
     useEffect(() => {
         const initApp = async () => {
+
+            // ДЛЯ ЛОКАЛКИ!!! ----
+            setVkId(10);
+            setIsLoading(false);
+
+                        if (!window.location.hostname.includes('vk.com')) {
+                  setVkId(10);
+                  // Получаем JWT через /auth/vk
+                  const response = await fetch('/auth/vk', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ vk_user_id: 10 })
+                  });
+                  if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('jwt', data.access_token);
+                  }
+                  setIsLoading(false);
+                  return;
+                }
+            // ДЛЯ ЛОКАЛКИ!!! ----
             try {
                 // 1. Инициализируем VK Bridge
                 await vkBridge.send('VKWebAppInit');

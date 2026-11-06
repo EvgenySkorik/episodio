@@ -6,9 +6,8 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
     def __repr__(self):
-        def __repr__(self):
-            data = {c.name: getattr(self, c.name) for c in self.__table__.columns}
-            return f"{self.__class__.__name__}({data})"
+        data = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        return f"{self.__class__.__name__}({data})"
 
 
 class Movie(Base):
@@ -59,6 +58,11 @@ class User(Base):
         back_populates="saved_by_users",
     )
 
+    user_movies: Mapped[list["UserMovie"]] = relationship(
+        "UserMovie",
+        back_populates="user",
+    )
+
 
 class UserMovie(Base):
     __tablename__ = "user_movie"
@@ -68,3 +72,17 @@ class UserMovie(Base):
     is_watched: Mapped[bool] = mapped_column(default=False)
     user_rating: Mapped[float] = mapped_column(nullable=True)
     is_tracking: Mapped[bool] = mapped_column(default=False)
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="user_movies",
+    )
+
+class MovieRatingStat(Base):
+    __tablename__ = "movie_rating_stat"
+
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movie.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    high_ratings_count: Mapped[int] = mapped_column(default=0)

@@ -150,16 +150,27 @@ class UserService:
         return added
 
     async def delete_movie_from_collection(self, vk_id: int, movie_id: int) -> bool:
-        """Удалить фильм по id у пользователя в коллекцию по VK_ID"""
+        """Удалить фильм по id у пользователя в коллекцию по VK_ID, если рейтинг пользователя >= 8.5 добавить в ТОП"""
         user_orm = await self._user_repo.get_by_vk_id(vk_id)
         if not user_orm:
             raise UserNotFoundError(f"Пользователь с VK ID {vk_id} не найден")
+
 
         movie_orm = await self._movie_repo.get_by_id(movie_id)
         if not movie_orm:
             raise MovieNotFoundError(f"Фильм с movie_id {movie_id} не найден")
 
         deleted_movie = await self._user_repo.delete_movie_from_user(user_orm.id, movie_orm.id)
+
+        if deleted_movie:
+            user_ratings = user_orm.user_movies
+            user_movie = next(
+                (um for um in user_ratings
+                 if um.movie_id == movie_id and um.user_rating and um.user_rating >= 8.5),
+                None
+            )
+            if user_movie:
+                await self._movie_repo.increment_high_ratings(movie_id)
 
         action = "отсутствует в" if not deleted_movie else "удален из"
         logger.info(f'Фильм {movie_orm.name} {action} коллекции пользователя {user_orm.first_name}')

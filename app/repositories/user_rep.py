@@ -36,12 +36,16 @@ class UserRepository(BaseUserRepository):
         stmt = (
             select(User)
             .where(User.id_vk == vk_id)
-            .options(selectinload(User.movie_collections))
+            .options(
+                selectinload(User.movie_collections),
+                selectinload(User.user_movies),
+            )
         )
         result = await self._session.execute(stmt)
         user = result.scalars().first()
 
         logger.info(f"Получили модель из БД по VK ID: first_name={user.first_name if user else None}")
+        logger.info(f'Возвращаем {user}')
         return user
 
     async def create(self, user: dict) -> User:

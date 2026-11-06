@@ -1,4 +1,8 @@
-const API_URL = '';
+// const API_URL = '';
+
+// ДЛЯ ЛОКАЛКИ!!!
+const API_URL = 'http://localhost:8000';
+// ДЛЯ ЛОКАЛКИ!!!
 
 const getHeaders = () => {
     const token = localStorage.getItem('jwt');

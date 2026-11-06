@@ -15,6 +15,7 @@ env/
 
 # Docker
 .env
+.env.prod
 docker-compose.override.yaml
 
 # Логи

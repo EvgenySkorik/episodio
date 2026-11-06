@@ -233,3 +233,18 @@ class MovieService:
         movies_orm = await self._repo.get_popular(limit=limit)
 
         return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
+
+    @cached(ttl=1800)
+    async def get_top_rated(self, limit: int) -> list[MovieResponse]:
+        """Получить список топовых фильмов/сериалов с лимитом.
+
+    Args:
+        limit: Максимальное количество фильмов в ответе
+
+    Returns:
+        list[MovieResponse]: Список схем топовых фильмов.
+    """
+
+        movies_orm = await self._repo.get_top_rated(limit=limit)
+
+        return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
