@@ -46,5 +46,11 @@ class BaseMovieRepository(ABC):
     async def get_popular(self, limit: int) -> Sequence[Movie]:
         pass
 
+    @abstractmethod
+    async def increment_high_ratings(self, movie_id: int) -> None: ...
+
+    @abstractmethod
+    async def get_top_rated(self, limit: int, offset: int = 0) -> Sequence[Movie]: ...
+
 
 

@@ -2,9 +2,10 @@ from collections.abc import Sequence
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.core.logging import get_logger
-from app.db.models import Movie, UserMovie
+from app.db.models import Movie, UserMovie, MovieRatingStat
 from app.repositories.bases.base_movie import BaseMovieRepository
 
 logger = get_logger(__name__)
@@ -138,4 +139,41 @@ class MovieRepository(BaseMovieRepository):
 
         result = await self._session.execute(stmt)
         logger.info("Получен список объектов по всем User с рейтингом выше 8,0")
+        return result.scalars().all()
+
+    async def increment_high_ratings(self, movie_id: int) -> None:
+        """Увеличить счётчик высоких оценок для фильма."""
+        stmt = (
+            pg_insert(MovieRatingStat)
+            .values(movie_id=movie_id, high_ratings_count=1)
+            .on_conflict_do_update(
+                index_elements=["movie_id"],
+                set_={"high_ratings_count": MovieRatingStat.high_ratings_count + 1},
+            )
+        )
+        await self._session.execute(stmt)
+        await self._session.commit()
+        logger.info(f"Увеличен счётчик высоких оценок для фильма {movie_id}")
+
+    async def get_top_rated(self, limit: int, offset: int = 0) -> Sequence[Movie]:
+        """
+                Получить Топ по рейтингу фильмы/сериалы с пагинацией из связанной таблицы MovieRatingStat
+                Args:
+                    limit: Количество записей на странице (по умолчанию 20)
+                    offset:
+                Returns:
+                    Sequence[Movie]: Список ORM-объектов для текущей страницы.
+                """
+        stmt = (
+            select(Movie)
+            .join(MovieRatingStat, MovieRatingStat.movie_id == Movie.id)
+            .order_by(
+                MovieRatingStat.high_ratings_count.desc(),
+                Movie.id.asc(),
+                      )
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        logger.info("Получен топ по рейтингу фильмов")
         return result.scalars().all()

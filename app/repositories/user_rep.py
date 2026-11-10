@@ -36,12 +36,16 @@ class UserRepository(BaseUserRepository):
         stmt = (
             select(User)
             .where(User.id_vk == vk_id)
-            .options(selectinload(User.movie_collections))
+            .options(
+                selectinload(User.movie_collections),
+                selectinload(User.user_movies),
+            )
         )
         result = await self._session.execute(stmt)
         user = result.scalars().first()
 
         logger.info(f"Получили модель из БД по VK ID: first_name={user.first_name if user else None}")
+        logger.info(f'Возвращаем {user}')
         return user
 
     async def create(self, user: dict) -> User:
@@ -142,3 +146,12 @@ class UserRepository(BaseUserRepository):
         result = await self._session.execute(stmt)
         await self._session.commit()
         return result.rowcount > 0 # type: ignore
+
+    async def get_user_movie(self, user_id: int, movie_id: int) -> UserMovie | None:
+        """Получить связь UserMovie по user_id и movie_id."""
+        stmt = select(UserMovie).where(
+            UserMovie.user_id == user_id,
+            UserMovie.movie_id == movie_id,
+        )
+        result = await self._session.execute(stmt)
+        return result.scalars().first()

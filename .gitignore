@@ -15,6 +15,7 @@ env/
 
 # Docker
 .env
+.env.prod
 docker-compose.override.yaml
 
 # Логи
@@ -25,6 +26,7 @@ CeleryWorker.log
 # Фронт
 episodio/node_modules/
 episodio/dist/
+patch/
 
 # OS
 .DS_Store

@@ -47,7 +47,7 @@ async def add_movie_to_collection(
     """Добавление фильма/сериала в коллекцию"""
     return await service.add_movie_to_collection(vk_id, movie_id)
 
-@users_rout.delete("/me/movies/{movie_id}", summary='Удалить фильм из коллекции')
+@users_rout.delete("/me/movies/{movie_id}", summary='Удалить фильм из коллекции', status_code=204)
 async def delete_movie_from_collection(
     vk_id: CurrentUserVkIdDep,
     movie_id: int,
