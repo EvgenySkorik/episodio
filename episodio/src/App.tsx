@@ -2,6 +2,7 @@ import {useState, useEffect} from 'react';
 import vkBridge from '@vkontakte/vk-bridge';
 import Home from './panels/Home';
 import MovieDetail from './panels/MovieDetail';
+import TopMovies from './panels/TopMovies';
 
 // ДЛЯ ЛОКАЛКИ!!! ----
 const API_URL = 'http://localhost:8000';
@@ -108,6 +109,8 @@ export const App = () => {
     };
 
     const goBack = () => setActivePanel('home');
+    const goHome = () => setActivePanel('home');
+    const openTop = () => setActivePanel('top');
     const refreshHome = () => setRefreshKey(prev => prev + 1);
 
     // Загрузка
@@ -149,6 +152,17 @@ export const App = () => {
                 id="home"
                 openMovie={openMovie}
                 vkId={vkId!}
+                openTop={openTop}
+            />
+        );
+    }
+
+    if (activePanel === 'top') {
+        return (
+            <TopMovies
+                id="top"
+                openMovie={openMovie}
+                goHome={goHome}
             />
         );
     }

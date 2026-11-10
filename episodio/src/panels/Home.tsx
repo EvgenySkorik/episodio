@@ -1,5 +1,5 @@
 import {useState, useEffect, useRef} from 'react';
-import {Search, Bookmark, Star, Tv, Plus} from 'lucide-react';
+import {Search, Bookmark, Star, Tv, Plus, Trophy} from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -10,9 +10,10 @@ interface HomeProps {
     id: string;
     openMovie: (id: number, inCollection: boolean) => void;
     vkId: number;
+    openTop?: () => void;
 }
 
-const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
+const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
     const [movies, setMovies] = useState<any[]>([]);
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(true);
@@ -200,6 +201,15 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId}) => {
                 >
                     <Star className="w-4 h-4 mr-1 fill-yellow-500 text-yellow-500"/> Популярное
                 </Button>
+                {openTop && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={openTop}
+                    >
+                        <Trophy className="w-4 h-4 mr-1 text-yellow-500"/> Топ
+                    </Button>
+                )}
             </div>
 
             {/* Поиск */}

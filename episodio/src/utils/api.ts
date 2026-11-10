@@ -38,3 +38,15 @@ export const addMovieToCollection = async (movieId: number) => {
     if (!res.ok) throw new Error('Ошибка добавления');
     return handleResponse(res);
 };
+
+export interface TopMoviesParams {
+    page?: number;
+    limit?: number;
+}
+
+export const getTopMovies = async ({page = 1, limit = 20}: TopMoviesParams = {}) => {
+    const params = new URLSearchParams({page: String(page), limit: String(limit)});
+    const res = await fetch(`${API_URL}/movies/top?${params.toString()}`);
+    if (!res.ok) throw new Error('Ошибка загрузки топа');
+    return res.json();
+};
