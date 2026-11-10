@@ -51,6 +51,10 @@ class BaseUserRepository(ABC):
     async def toggle_tracking(self, user_id: int, movie_id: int, is_tracking: bool) -> bool:
         pass
 
+    @abstractmethod
+    async def get_user_movie(self, user_id: int, movie_id: int) -> UserMovie | None:
+        pass
+
 
 
 

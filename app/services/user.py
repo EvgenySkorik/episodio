@@ -160,17 +160,13 @@ class UserService:
         if not movie_orm:
             raise MovieNotFoundError(f"Фильм с movie_id {movie_id} не найден")
 
+        user_movie = await self._user_repo.get_user_movie(user_orm.id, movie_orm.id)
+        rating_before = user_movie.user_rating if user_movie else None
+
         deleted_movie = await self._user_repo.delete_movie_from_user(user_orm.id, movie_orm.id)
 
-        if deleted_movie:
-            user_ratings = user_orm.user_movies
-            user_movie = next(
-                (um for um in user_ratings
-                 if um.movie_id == movie_id and um.user_rating and um.user_rating >= 8.5),
-                None
-            )
-            if user_movie:
-                await self._movie_repo.increment_high_ratings(movie_id)
+        if deleted_movie and rating_before and rating_before >= 8.5:
+            await self._movie_repo.increment_high_ratings(movie_id)
 
         action = "отсутствует в" if not deleted_movie else "удален из"
         logger.info(f'Фильм {movie_orm.name} {action} коллекции пользователя {user_orm.first_name}')

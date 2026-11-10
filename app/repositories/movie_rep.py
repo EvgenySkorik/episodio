@@ -155,18 +155,23 @@ class MovieRepository(BaseMovieRepository):
         await self._session.commit()
         logger.info(f"Увеличен счётчик высоких оценок для фильма {movie_id}")
 
-    async def get_top_rated(self, limit: int) -> Sequence[Movie]:
+    async def get_top_rated(self, limit: int, offset: int = 0) -> Sequence[Movie]:
         """
                 Получить Топ по рейтингу фильмы/сериалы с пагинацией из связанной таблицы MovieRatingStat
                 Args:
                     limit: Количество записей на странице (по умолчанию 20)
+                    offset:
                 Returns:
                     Sequence[Movie]: Список ORM-объектов для текущей страницы.
                 """
         stmt = (
             select(Movie)
             .join(MovieRatingStat, MovieRatingStat.movie_id == Movie.id)
-            .order_by(MovieRatingStat.high_ratings_count.desc())
+            .order_by(
+                MovieRatingStat.high_ratings_count.desc(),
+                Movie.id.asc(),
+                      )
+            .offset(offset)
             .limit(limit)
         )
         result = await self._session.execute(stmt)

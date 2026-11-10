@@ -146,3 +146,12 @@ class UserRepository(BaseUserRepository):
         result = await self._session.execute(stmt)
         await self._session.commit()
         return result.rowcount > 0 # type: ignore
+
+    async def get_user_movie(self, user_id: int, movie_id: int) -> UserMovie | None:
+        """Получить связь UserMovie по user_id и movie_id."""
+        stmt = select(UserMovie).where(
+            UserMovie.user_id == user_id,
+            UserMovie.movie_id == movie_id,
+        )
+        result = await self._session.execute(stmt)
+        return result.scalars().first()

@@ -48,7 +48,7 @@ async def get_top_movies(
 
 ) -> list[MovieResponse]:
     """Получить топ фильмов."""
-    return await service.get_top_rated(pagination.limit)
+    return await service.get_top_rated(pagination.limit, page=pagination.page)
 
 @movies_rout.get("/popular", summary='Получить все популярные')
 async def get_all_movies_popular(

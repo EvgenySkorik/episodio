@@ -26,6 +26,7 @@ CeleryWorker.log
 # Фронт
 episodio/node_modules/
 episodio/dist/
+patch/
 
 # OS
 .DS_Store
