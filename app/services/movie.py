@@ -10,7 +10,7 @@ from app.infrastructure.hawk_client import HawkClient
 from app.infrastructure.redis_client import RedisCacheClient
 from app.repositories.bases.base_movie import BaseMovieRepository
 from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
-from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
+from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate, MovieTopResponse
 from app.services.notification import NotificationService
 
 logger = get_logger(__name__)
@@ -235,16 +235,22 @@ class MovieService:
         return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
 
     @cached(ttl=1800)
-    async def get_top_rated(self, limit: int, page: int = 1) -> list[MovieResponse]:
+    async def get_top_rated(self, limit: int, page: int = 1) -> list[MovieTopResponse]:
         """Получить список топовых фильмов/сериалов с лимитом.
 
     Args:
         limit: Максимальное количество фильмов в ответе
 
     Returns:
-        list[MovieResponse]: Список схем топовых фильмов.
+        list[MovieTopResponse]: Список схем топовых фильмов.
     """
         offset = (page - 1) * limit
-        movies_orm = await self._repo.get_top_rated(limit=limit, offset=offset)
-
-        return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
+        rows = await self._repo.get_top_rated(limit=limit, offset=offset)
+        result = []
+        for movie, ai_description in rows:
+            movie_resp = MovieResponse.model_validate(movie, from_attributes=True)
+            result.append(MovieTopResponse(
+                **movie_resp.model_dump(exclude_unset=True),
+                ai_description=ai_description,
+            ))
+        return result

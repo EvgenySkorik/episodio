@@ -86,3 +86,4 @@ class MovieRatingStat(Base):
         primary_key=True,
     )
     high_ratings_count: Mapped[int] = mapped_column(default=0)
+    ai_description: Mapped[str | None] = mapped_column(nullable=True)

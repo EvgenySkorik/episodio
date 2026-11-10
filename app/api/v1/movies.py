@@ -6,7 +6,7 @@ from fastapi.params import Query
 
 from app.api.dependencies import PaginationDep, ServiceMovieDep
 from app.core.logging import get_logger
-from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate
+from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate, MovieTopResponse
 
 logger = get_logger(__name__)
 load_dotenv()
@@ -46,7 +46,7 @@ async def get_top_movies(
         service: ServiceMovieDep,
         pagination: PaginationDep,
 
-) -> list[MovieResponse]:
+) -> list[MovieTopResponse]:
     """Получить топ фильмов."""
     return await service.get_top_rated(pagination.limit, page=pagination.page)
 
