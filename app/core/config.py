@@ -57,6 +57,12 @@ class CelerySettings(BaseSettings):
     check_series_minute: int = 6
     check_series_day: int = 1
 
+class RedisSettings(BaseSettings):
+    host: str = "localhost"
+    port: int = 6379
+    password: str = ""
+    cache_db: int = 1
+    chat_db: int = 2
 
 class AppSettings(BaseSettings):
     """Класс с общими настройками"""
@@ -72,11 +78,10 @@ class AppSettings(BaseSettings):
     vk: VkSettings = VkSettings()
     celery: CelerySettings = CelerySettings()
     pagination: PaginationSettings = PaginationSettings()
+    redis: RedisSettings = RedisSettings()
 
     secret_jwt_key: str = ""
     hawk_secret_token: str = ""
-    redis_password: str = ""
-    redis_host: str = ""
 
     title: str = "Episodio"
     description: str = "API для поиска и хранения фильмов и сериалов"

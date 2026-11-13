@@ -1,28 +1,37 @@
 import {useState, useEffect, useRef} from 'react';
-import {Search, Bookmark, Star, Tv, Plus, Trophy} from 'lucide-react';
+import {Search, Bookmark, Star, Tv, Plus, Trophy, MessageCircle} from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Slider} from '@/components/ui/slider';
-import {getUserMovies, searchMovies, addMovieToCollection} from '../utils/api';
+import {
+    getUserMovies,
+    searchMovies,
+    addMovieToCollection,
+    rateMovie,
+    toggleTracking,
+    getPopularMovies,
+    Movie,
+    MovieWithUserRating,
+} from '../utils/api';
 
 interface HomeProps {
     id: string;
     openMovie: (id: number, inCollection: boolean) => void;
     vkId: number;
     openTop?: () => void;
+    openChat?: () => void;
 }
 
-const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
-    const [movies, setMovies] = useState<any[]>([]);
+const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop, openChat}) => {
+    const [movies, setMovies] = useState<MovieWithUserRating[]>([]);
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(true);
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchResults, setSearchResults] = useState<Movie[]>([]);
     const [showSearch, setShowSearch] = useState(false);
-    const token = localStorage.getItem('jwt');
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [mode, setMode] = useState<'collection' | 'popular'>('collection');
-    const [popularMovies, setPopularMovies] = useState<any[]>([]);
+    const [popularMovies, setPopularMovies] = useState<Movie[]>([]);
     const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const collectionVariant: 'default' | 'outline' = mode === 'collection' ? 'default' : 'outline';
     const popularVariant: 'default' | 'outline' = mode === 'popular' ? 'default' : 'outline';
@@ -33,6 +42,13 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
             return () => clearTimeout(timer);
         }
     }, [toast]);
+
+    // Очистка debounce-таймера при размонтировании
+    useEffect(() => {
+        return () => {
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchMovies = async () => {
@@ -51,8 +67,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
     const fetchPopularMovies = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/movies/popular?limit=20');
-            const data = await response.json();
+            const data = await getPopularMovies(20);
             setPopularMovies(data);
         } catch (error) {
             console.error('Ошибка загрузки популярных:', error);
@@ -87,69 +102,30 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
         }
     };
 
-    const rateMovie = async (movieId: number, rating: number) => {
+    const handleRateMovie = async (movieId: number, rating: number) => {
         try {
-            const token = localStorage.getItem('jwt');
-            if (!token) {
-                console.error('Нет токена авторизации');
-                return;
-            }
-
-            const response = await fetch(`/users/me/movies/${movieId}/rating`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({rating})  // ✅ Правильно!
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Ошибка сохранения рейтинга');
-            }
-
+            await rateMovie(movieId, rating);
             const updated = await getUserMovies();
             setMovies(updated);
-
         } catch (error) {
             console.error('Ошибка сохранения рейтинга:', error);
             alert('Не удалось сохранить рейтинг');
         }
     };
 
-    const toggleTracking = async (movieId: number, currentStatus: boolean) => {
+    const handleToggleTracking = async (movieId: number, currentStatus: boolean) => {
         const newStatus = !currentStatus;
-        const token = localStorage.getItem('jwt');
-
-        if (!token) {
-            console.error('Нет токена авторизации');
-            return;
-        }
 
         setMovies((prev) =>
             prev.map((m) => m.id === movieId ? {...m, is_tracking: newStatus} : m)
         );
 
         try {
-            const response = await fetch(`/users/me/movies/${movieId}/track`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({is_tracking: newStatus})
-            });
-
-            if (!response.ok) {
-                throw new Error('Ошибка обновления статуса');
-            }
-
+            await toggleTracking(movieId, newStatus);
             setToast({
                 message: newStatus ? '✅ Сериал отслеживается' : '❌ Сериал не отслеживается',
                 type: newStatus ? 'success' : 'error'
             });
-
         } catch (error) {
             setMovies((prev) =>
                 prev.map((m) => m.id === movieId ? {...m, is_tracking: currentStatus} : m)
@@ -210,6 +186,15 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
                         <Trophy className="w-4 h-4 mr-1 text-yellow-500"/> Топ
                     </Button>
                 )}
+                {openChat && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={openChat}
+                    >
+                        <MessageCircle className="w-4 h-4 mr-1 text-blue-500"/> Чат
+                    </Button>
+                )}
             </div>
 
             {/* Поиск */}
@@ -237,7 +222,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
                         <p className="text-gray-500">Ничего не найдено</p>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {searchResults.map((movie: any) => (
+                            {searchResults.map((movie) => (
                                 <Card key={movie.id}
                                       className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors cursor-pointer"
                                       onClick={() => openMovie(movie.id, false)}>
@@ -275,7 +260,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
                         <p className="text-gray-500">Нет фильмов в коллекции</p>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {movies.map((movie: any) => (
+                            {movies.map((movie) => (
                                 <Card key={movie.id}
                                       className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
                                     <CardContent className="p-3 space-y-3">
@@ -309,7 +294,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
                                                         clearTimeout(debounceTimer.current);
                                                     }
                                                     debounceTimer.current = setTimeout(() => {
-                                                        rateMovie(movie.id, value).catch(console.error);
+                                                        handleRateMovie(movie.id, value).catch(console.error);
                                                     }, 500);
                                                 }}
                                                 className="w-full relative z-10"
@@ -324,7 +309,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
                                                     className="h-8 w-8 p-0"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        toggleTracking(movie.id, movie.is_tracking).catch(console.error);
+                                                        handleToggleTracking(movie.id, movie.is_tracking).catch(console.error);
                                                     }}
                                                 >
                                                     <Tv className={`w-4 h-4 transition-colors ${
@@ -351,7 +336,7 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop}) => {
                         <p className="text-gray-500">Нет популярных фильмов</p>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {popularMovies.map((movie: any) => (
+                            {popularMovies.map((movie) => (
                                 <Card key={movie.id}
                                       className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors">
                                     <CardContent className="p-3 space-y-2">

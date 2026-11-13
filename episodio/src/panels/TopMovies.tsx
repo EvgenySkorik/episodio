@@ -1,22 +1,8 @@
-import {useState, useEffect, useCallback} from 'react';
-import {Star, Trophy, ChevronLeft, ChevronRight, Tv, RefreshCw} from 'lucide-react';
+import {useCallback, useEffect, useState} from 'react';
+import {ArrowLeft, Star, Trophy, Tv, RefreshCw} from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
-import {getTopMovies} from '../utils/api';
-
-interface Movie {
-    id: number;
-    name: string;
-    alternative_name: string | null;
-    year: number;
-    movie_type: string;
-    is_series: boolean;
-    rating_kp: number | null;
-    rating_imdb: number | null;
-    poster: string | null;
-    genres: string[] | null;
-    short_description: string | null;
-}
+import {getTopMovies, MovieTopResponse} from '../utils/api';
 
 interface TopMoviesProps {
     id: string;
@@ -25,9 +11,21 @@ interface TopMoviesProps {
 }
 
 const PAGE_SIZE = 20;
+const DESCRIPTION_MAX_LENGTH = 200;
+
+const truncate = (text: string, max = DESCRIPTION_MAX_LENGTH): string =>
+    text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+
+/** Описание: сначала AI-описание, иначе короткое/полное (обрезанное). */
+const getDescription = (movie: MovieTopResponse): string | null => {
+    if (movie.ai_description) return truncate(movie.ai_description);
+    if (movie.short_description) return truncate(movie.short_description);
+    if (movie.description) return truncate(movie.description);
+    return null;
+};
 
 const TopMovies: React.FC<TopMoviesProps> = ({id, openMovie, goHome}) => {
-    const [movies, setMovies] = useState<Movie[]>([]);
+    const [movies, setMovies] = useState<MovieTopResponse[]>([]);
     const [page, setPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -61,6 +59,11 @@ const TopMovies: React.FC<TopMoviesProps> = ({id, openMovie, goHome}) => {
 
     return (
         <div id={id} className="min-h-screen bg-gray-950 text-white p-4 space-y-6">
+            {/* Кнопка "Назад" — единый стиль для всех панелей */}
+            <Button variant="ghost" size="sm" onClick={goHome} className="-ml-2">
+                <ArrowLeft className="w-4 h-4 mr-1"/> Назад
+            </Button>
+
             {/* Заголовок */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -90,50 +93,74 @@ const TopMovies: React.FC<TopMoviesProps> = ({id, openMovie, goHome}) => {
                 </div>
             )}
 
-            {/* Список */}
+            {/* Список: одна карточка на строку */}
             {loading ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {Array.from({length: 8}).map((_, i) => (
-                        <div key={i}
-                             className="aspect-[2/3] w-full rounded-lg bg-gray-900 animate-pulse"/>
+                <div className="space-y-4">
+                    {Array.from({length: 6}).map((_, i) => (
+                        <div key={i} className="flex gap-4 rounded-xl border border-gray-800 bg-gray-900 p-3">
+                            <div className="w-[80px] h-[120px] shrink-0 rounded-lg bg-gray-800 animate-pulse"/>
+                            <div className="flex-1 space-y-2 py-1">
+                                <div className="h-4 w-2/3 rounded bg-gray-800 animate-pulse"/>
+                                <div className="h-3 w-1/3 rounded bg-gray-800 animate-pulse"/>
+                                <div className="h-3 w-full rounded bg-gray-800 animate-pulse"/>
+                                <div className="h-3 w-5/6 rounded bg-gray-800 animate-pulse"/>
+                            </div>
+                        </div>
                     ))}
                 </div>
             ) : movies.length === 0 && !error ? (
                 <p className="text-gray-500">Топ пока пуст — оцените пару фильмов!</p>
             ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="space-y-4">
                     {movies.map((movie, index) => {
                         const globalRank = (page - 1) * PAGE_SIZE + index + 1;
+                        const description = getDescription(movie);
                         return (
                             <Card
                                 key={movie.id}
-                                className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors cursor-pointer relative"
+                                className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-colors cursor-pointer"
                                 onClick={() => openMovie(movie.id, false)}
                             >
-                                <span
-                                    className="absolute top-2 left-2 z-10 bg-black/70 text-white text-xs font-bold px-2 py-1 rounded-md">
-                                    #{globalRank}
-                                </span>
-                                <CardContent className="p-3 space-y-2">
-                                    {movie.poster ? (
-                                        <img src={movie.poster} alt={movie.name}
-                                             loading="lazy"
-                                             className="w-full aspect-[2/3] object-cover rounded-lg"/>
-                                    ) : (
-                                        <div className="w-full aspect-[2/3] rounded-lg bg-gray-800 flex items-center justify-center text-gray-500 text-xs">
-                                            Нет постера
-                                        </div>
-                                    )}
-                                    <h3 className="font-medium truncate">{movie.name}</h3>
-                                    <p className="text-xs text-gray-400">
-                                        {movie.year} • {movie.is_series ? 'сериал' : 'фильм'}
-                                    </p>
-                                    <p className="text-xs flex items-center gap-1 text-gray-300">
-                                        <Star className="w-3 h-3 fill-yellow-500 text-yellow-500"/>
-                                        КИНОПОИСК: {movie.rating_kp ?? '—'}
-                                        <span className="text-gray-600">|</span>
-                                        IMDb: {movie.rating_imdb ?? '—'}
-                                    </p>
+                                <CardContent className="p-3 flex gap-4">
+                                    {/* Постер слева */}
+                                    <div className="relative shrink-0">
+                                        {movie.poster ? (
+                                            <img
+                                                src={movie.poster}
+                                                alt={movie.name}
+                                                loading="lazy"
+                                                className="w-[80px] h-[120px] object-cover rounded"
+                                            />
+                                        ) : (
+                                            <div
+                                                className="w-[80px] h-[120px] rounded bg-gray-800 flex items-center justify-center text-gray-500 text-[10px] text-center px-1">
+                                                Нет постера
+                                            </div>
+                                        )}
+                                        <span
+                                            className="absolute top-1 left-1 bg-black/70 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
+                                            #{globalRank}
+                                        </span>
+                                    </div>
+
+                                    {/* Инфо справа */}
+                                    <div className="flex-1 min-w-0 space-y-1">
+                                        <h3 className="font-medium truncate">{movie.name}</h3>
+                                        <p className="text-xs text-gray-400">
+                                            {movie.year} • {movie.is_series ? 'сериал' : 'фильм'}
+                                        </p>
+                                        <p className="text-xs flex items-center gap-1 text-gray-300">
+                                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500"/>
+                                            КП: {movie.rating_kp ?? '—'}
+                                            <span className="text-gray-600">|</span>
+                                            IMDb: {movie.rating_imdb ?? '—'}
+                                        </p>
+                                        {description && (
+                                            <p className="text-xs text-gray-400 line-clamp-4 pt-1">
+                                                {description}
+                                            </p>
+                                        )}
+                                    </div>
                                 </CardContent>
                             </Card>
                         );
@@ -146,12 +173,12 @@ const TopMovies: React.FC<TopMoviesProps> = ({id, openMovie, goHome}) => {
                 <div className="flex items-center justify-center gap-4 pt-2">
                     <Button variant="outline" size="sm" disabled={!hasPrev}
                             onClick={() => goToPage(page - 1)}>
-                        <ChevronLeft className="w-4 h-4"/> Назад
+                        Назад
                     </Button>
                     <span className="text-sm text-gray-400">Страница {page}</span>
                     <Button variant="outline" size="sm" disabled={!hasNext}
                             onClick={() => goToPage(page + 1)}>
-                        Вперёд <ChevronRight className="w-4 h-4"/>
+                        Вперёд
                     </Button>
                 </div>
             )}

@@ -3,16 +3,14 @@ import vkBridge from '@vkontakte/vk-bridge';
 import Home from './panels/Home';
 import MovieDetail from './panels/MovieDetail';
 import TopMovies from './panels/TopMovies';
-
-// ДЛЯ ЛОКАЛКИ!!! ----
-// const API_URL = 'http://localhost:8000';
-// ДЛЯ ЛОКАЛКИ!!! ----
+import Chat from './panels/Chat';
 
 export const App = () => {
     const [isInCollection, setIsInCollection] = useState<boolean>(false);
     const [activePanel, setActivePanel] = useState<string>('home');
     const [movieId, setMovieId] = useState<string | null>(null);
     const [vkId, setVkId] = useState<number | null>(null);
+    const [userName, setUserName] = useState<string | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
@@ -21,11 +19,9 @@ export const App = () => {
         const initApp = async () => {
 
             // ДЛЯ ЛОКАЛКИ!!! ----
-            setVkId(10);
-            setIsLoading(false);
-
-                        if (!window.location.hostname.includes('vk.com')) {
+            if (!window.location.hostname.includes('vk.com')) {
                   setVkId(10);
+                  setUserName('Тестовый пользователь');
                   // Получаем JWT через /auth/vk
                   const response = await fetch('/auth/vk', {
                     method: 'POST',
@@ -48,6 +44,7 @@ export const App = () => {
                 const user = await vkBridge.send('VKWebAppGetUserInfo');
                 const userId = user.id;
                 setVkId(userId);
+                setUserName(`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || `Пользователь ${userId}`);
 
                 // 3. Получаем или обновляем JWT
                 let token = localStorage.getItem('jwt');
@@ -111,6 +108,7 @@ export const App = () => {
     const goBack = () => setActivePanel('home');
     const goHome = () => setActivePanel('home');
     const openTop = () => setActivePanel('top');
+    const openChat = () => setActivePanel('chat');
     const refreshHome = () => setRefreshKey(prev => prev + 1);
 
     // Загрузка
@@ -153,6 +151,7 @@ export const App = () => {
                 openMovie={openMovie}
                 vkId={vkId!}
                 openTop={openTop}
+                openChat={openChat}
             />
         );
     }
@@ -162,6 +161,17 @@ export const App = () => {
             <TopMovies
                 id="top"
                 openMovie={openMovie}
+                goHome={goHome}
+            />
+        );
+    }
+
+    if (activePanel === 'chat') {
+        return (
+            <Chat
+                id="chat"
+                vkId={vkId!}
+                userName={userName ?? undefined}
                 goHome={goHome}
             />
         );

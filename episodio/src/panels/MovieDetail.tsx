@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { getMovieById, deleteMovieFromCollection, Movie } from '../utils/api';
 
 interface MovieDetailProps {
   id: string;
@@ -13,14 +14,13 @@ interface MovieDetailProps {
 }
 
 const MovieDetail: React.FC<MovieDetailProps> = ({ movieId, goBack, isInCollection, onDelete }) => {
-  const [movie, setMovie] = useState<any>(null);
+  const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMovie = async () => {
       try {
-        const res = await fetch(`/movies/${movieId}`);
-        const data = await res.json();
+        const data = await getMovieById(movieId!);
         setMovie(data);
       } catch (error) {
         console.error('Ошибка загрузки фильма:', error);
@@ -33,30 +33,14 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movieId, goBack, isInCollecti
 
   const handleDelete = async () => {
     if (!window.confirm('Удалить фильм из коллекции?')) return;
-    const token = localStorage.getItem('jwt');
-    if (!token) {
-        alert('Вы не авторизованы');
-        return;
-    }
     try {
-        const res = await fetch(`/users/me/movies/${movieId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-        });
-        if (res.ok) {
-            alert('Фильм удалён из коллекции');
-            if (onDelete) onDelete();
-            goBack();
-        } else {
-            const error = await res.json();
-            alert(error.detail || 'Ошибка удаления');
-        }
+        await deleteMovieFromCollection(Number(movieId));
+        alert('Фильм удалён из коллекции');
+        if (onDelete) onDelete();
+        goBack();
     } catch (error) {
         console.error('Ошибка удаления:', error);
-        alert('Ошибка соединения с сервером');
+        alert(error instanceof Error ? error.message : 'Ошибка соединения с сервером');
     }
 };
 
@@ -65,7 +49,11 @@ const MovieDetail: React.FC<MovieDetailProps> = ({ movieId, goBack, isInCollecti
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-4 space-y-6">
-      <Button variant="ghost" onClick={goBack}><ArrowLeft className="w-4 h-4" /> Назад</Button>
+      <div className="flex justify-start">
+        <Button variant="ghost" size="sm" onClick={goBack} className="-ml-2">
+          <ArrowLeft className="w-4 h-4 mr-1" /> Назад
+        </Button>
+      </div>
       <Card className="bg-gray-900 border-gray-800">
         <CardContent className="p-6 space-y-4">
           <img src={movie.poster} alt={movie.name} className="w-full max-w-xs mx-auto rounded-xl" />
