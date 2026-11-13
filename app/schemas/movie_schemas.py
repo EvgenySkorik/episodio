@@ -31,6 +31,12 @@ class MovieWithUserRatingResponse(MovieResponse):
     is_tracking: bool | None = False
 
 
+class MovieTopResponse(MovieResponse):
+    """Схема для топа: фильм + рейтинг пользователя + AI-описание."""
+    user_rating: float | None = 0
+    ai_description: str | None = None
+
+
 class MovieCreate(BaseModel):
     id_kino: int
     name: str
@@ -69,8 +75,10 @@ class MovieUpdate(BaseModel):
     genres: list | None = None
     countries: list | None = None
 
+
 class RatingSchema(BaseModel):
     rating: float
+
 
 class TrackingSchema(BaseModel):
     is_tracking: bool

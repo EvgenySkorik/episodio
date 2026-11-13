@@ -5,7 +5,7 @@ import MovieDetail from './panels/MovieDetail';
 import TopMovies from './panels/TopMovies';
 
 // ДЛЯ ЛОКАЛКИ!!! ----
-const API_URL = 'http://localhost:8000';
+// const API_URL = 'http://localhost:8000';
 // ДЛЯ ЛОКАЛКИ!!! ----
 
 export const App = () => {

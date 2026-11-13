@@ -76,6 +76,7 @@ class AppSettings(BaseSettings):
     secret_jwt_key: str = ""
     hawk_secret_token: str = ""
     redis_password: str = ""
+    redis_host: str = ""
 
     title: str = "Episodio"
     description: str = "API для поиска и хранения фильмов и сериалов"
