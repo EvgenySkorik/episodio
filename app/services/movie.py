@@ -253,5 +253,4 @@ class MovieService:
                 **movie_resp.model_dump(exclude_unset=True),
                 ai_description=ai_description,
             ))
-        logger.info(f'IN REPO!!! {result}')
         return result
