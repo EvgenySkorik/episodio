@@ -61,6 +61,7 @@ class User(Base):
     user_movies: Mapped[list["UserMovie"]] = relationship(
         "UserMovie",
         back_populates="user",
+        overlaps="movie_collections,saved_by_users",
     )
 
 
@@ -76,6 +77,7 @@ class UserMovie(Base):
     user: Mapped["User"] = relationship(
         "User",
         back_populates="user_movies",
+        overlaps="movie_collections,saved_by_users",
     )
 
 class MovieRatingStat(Base):

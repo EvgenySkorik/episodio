@@ -14,7 +14,7 @@ class RedisCacheClient:
     def __init__(self) -> None:
         retry = Retry(ExponentialBackoff(), 3)
         self._redis: Redis = Redis.from_url(
-            f"redis://:{settings.redis_password}@redis:6379/1",
+            f"redis://:{settings.redis_password}@{settings.redis_host}:6379/1",
             decode_responses=True,
             retry=retry,
             retry_on_error=[ConnectionError, TimeoutError],

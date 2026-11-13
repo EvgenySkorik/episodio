@@ -41,7 +41,7 @@ async def get_all_movies_paginated(
     result: list[MovieResponse] = await service.get_all_movies_paginated(limit=pagination.limit, page=pagination.page)
     return result
 
-@movies_rout.get("/top", summary='Топ фильмов', response_model=list[MovieResponse])
+@movies_rout.get("/top", summary='Топ фильмов', response_model=list[MovieTopResponse])
 async def get_top_movies(
         service: ServiceMovieDep,
         pagination: PaginationDep,
