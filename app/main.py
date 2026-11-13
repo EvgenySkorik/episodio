@@ -9,12 +9,14 @@ from starlette.middleware.cors import CORSMiddleware
 from app.api.except_handlers import register_exception_handlers
 from app.api.v1.admin import admin_rout
 from app.api.v1.auth import auth_rout
+from app.api.v1.chat import chat_rout
 from app.api.v1.movies import movies_rout
 from app.api.v1.users import users_rout
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.database import create_tables
 from app.factories import get_hawk_client, get_http_client, get_redis_client
+from app.infrastructure.redis_client import RedisChatClient
 
 
 @asynccontextmanager
@@ -22,10 +24,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.http_client = get_http_client()
     app.state.hawk_client = get_hawk_client()
     app.state.redis_client = get_redis_client()
+    app.state.redis_chat_client = RedisChatClient()
     await create_tables()
     yield
     await app.state.http_client.close()
     await app.state.redis_client.close()
+    await app.state.redis_chat_client.close()
     # await delete_tables()
 
 
@@ -70,6 +74,7 @@ app.include_router(movies_rout)
 app.include_router(users_rout)
 app.include_router(auth_rout)
 app.include_router(admin_rout)
+app.include_router(chat_rout)
 @app.get("/")
 async def root():
     return {"status": "ok"}

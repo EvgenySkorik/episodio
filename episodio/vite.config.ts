@@ -32,6 +32,10 @@ export default defineConfig({
       '/users': 'http://127.0.0.1:8000',
       '/movies': 'http://127.0.0.1:8000',
       '/auth': 'http://127.0.0.1:8000',
+        '/ws': {
+    target: 'ws://127.0.0.1:8000',
+    ws: true,
+  },
     },
   },
   build: {
