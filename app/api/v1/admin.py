@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from app.api.dependencies import ServiceAiDep
 from app.core.config import settings
 from app.core.exceptions.exceptions import TestError
 from app.core.logging import get_logger
@@ -72,4 +73,21 @@ async def get_latest_logs(
         }
     )
 
+@admin_rout.post("/ai-balance", summary="Баланс GigaChat")
+async def ai_balance(
+    password: UserLoginPass,
+    ai_service: ServiceAiDep,
+):
+    if not verify_admin_password(password.password):
+        raise HTTPException(403, "Неверный пароль")
+    return await ai_service._client.balance()
+
+@admin_rout.post("/ai-models", summary="Модели для GigaChat")
+async def ai_models(
+    password: UserLoginPass,
+    ai_service: ServiceAiDep,
+):
+    if not verify_admin_password(password.password):
+        raise HTTPException(403, "Неверный пароль")
+    return await ai_service._client.models()
 

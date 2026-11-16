@@ -21,12 +21,34 @@ def check_series_updates(self: Any) -> None:
 
     async def _run():
         async with create_container() as c:
-            await c.movie_service.check_series_updates()
+            return await c.movie_service.check_series_updates()
 
-    loop = asyncio.get_event_loop()
     try:
-        loop.run_until_complete(_run())
-        logger.info("Задача check_series_updates завершена успешно")
-    except Exception as exc: # noqa: BLE001
+        count = asyncio.run(_run())
+        logger.info(f"Задача check_series_updates завершена успешно")
+    except Exception as exc:  # noqa: BLE001
         logger.error(f"Ошибка в задаче check_series_updates: {exc}")
+        raise self.retry(exc=exc)
+
+
+@celery_app.task(
+    name="generate_missing_ai_descriptions",
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+    acks_late=True,
+)
+def generate_missing_ai_descriptions(self: Any) -> None:
+    """Celery задача для генерации ИИ описаний."""
+    logger.info("Запуск задачи generate_missing_ai_descriptions")
+
+    async def _run():
+        async with create_container() as c:
+            return await c.movie_service.generate_missing_ai_descriptions(10)
+
+    try:
+        count = asyncio.run(_run())
+        logger.info(f"Задача generate_missing_ai_descriptions завершена, обработано: {count}")
+    except Exception as exc:  # noqa: BLE001
+        logger.error(f"Ошибка в задаче generate_missing_ai_descriptions: {exc}")
         raise self.retry(exc=exc)

@@ -177,3 +177,37 @@ class MovieRepository(BaseMovieRepository):
         result = await self._session.execute(stmt)
         logger.info("Получен топ по рейтингу фильмов")
         return result.all()  # type: ignore[return-value]
+
+    async def get_top_rated_without_ai(self, limit: int) -> Sequence[Movie]:
+        """
+        Получить фильмы из топа без ИИ-описания.
+
+        Args:
+            limit: Максимальное количество фильмов за раз
+        Returns:
+            Sequence[Movie]: Список ORM-объектов.
+        """
+        stmt = (
+            select(Movie)
+            .join(MovieRatingStat, MovieRatingStat.movie_id == Movie.id)
+            .where(MovieRatingStat.ai_description.is_(None))
+            .order_by(MovieRatingStat.high_ratings_count.desc())
+            .limit(limit)
+        )
+        result = await self._session.execute(stmt)
+        logger.info("Получен топ без ИИ-описания для обновления.")
+        return result.scalars().all()
+
+    async def update_ai_description(self, movie_id: int, ai_description: str) -> None:
+        """Обновить или создать запись с AI-описанием."""
+        stmt = (
+            pg_insert(MovieRatingStat)
+            .values(movie_id=movie_id, ai_description=ai_description)
+            .on_conflict_do_update(
+                index_elements=["movie_id"],
+                set_={"ai_description": ai_description},
+            )
+        )
+        await self._session.execute(stmt)
+        logger.info(f"Фильм id={movie_id} обновлен через ИИ")
+        await self._session.commit()

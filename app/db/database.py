@@ -1,6 +1,8 @@
 from collections.abc import AsyncGenerator
 
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -8,7 +10,7 @@ from app.db.models import Base
 
 logger = get_logger(__name__)
 
-AsyncEngine = create_async_engine(settings.postgres.url, echo=False)
+AsyncEngine = create_async_engine(settings.postgres.url, echo=False, poolclass=NullPool)
 AsyncSessionLocal = async_sessionmaker(
     bind=AsyncEngine, expire_on_commit=False, class_=AsyncSession
 )

@@ -52,5 +52,11 @@ class BaseMovieRepository(ABC):
     @abstractmethod
     async def get_top_rated(self, limit: int, offset: int = 0) -> Sequence[tuple[Movie, str | None]]: ...
 
+    @abstractmethod
+    async def get_top_rated_without_ai(self, limit: int) -> Sequence[Movie]: ...
+
+    @abstractmethod
+    async def update_ai_description(self, movie_id: int, ai_description: str) -> None: ...
+
 
 

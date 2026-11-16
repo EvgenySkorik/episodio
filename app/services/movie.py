@@ -3,7 +3,7 @@ from collections.abc import Sequence
 
 from app.clients.kp_client import KinopoiskClient
 from app.core.config import settings
-from app.core.exceptions.exceptions import MovieNotFoundError
+from app.core.exceptions.exceptions import MovieNotFoundError, GigaChatError
 from app.core.logging import get_logger
 from app.infrastructure.cache_decorator import cached
 from app.infrastructure.hawk_client import HawkClient
@@ -11,6 +11,7 @@ from app.infrastructure.redis_client import RedisCacheClient
 from app.repositories.bases.base_movie import BaseMovieRepository
 from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
 from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate, MovieTopResponse
+from app.services.ai import AiService
 from app.services.notification import NotificationService
 
 logger = get_logger(__name__)
@@ -24,12 +25,14 @@ class MovieService:
             repository: BaseMovieRepository,
             kinopoisk_client: KinopoiskClient,
             notification_service: NotificationService,
+            ai_service: AiService,
             hawk: HawkClient,
             cached_client: RedisCacheClient,
     ):
         self._repo = repository
         self._kino_client = kinopoisk_client
         self._notify_service = notification_service
+        self._ai_service = ai_service
         self._hawk = hawk
         self._redis = cached_client
 
@@ -254,3 +257,28 @@ class MovieService:
                 ai_description=ai_description,
             ))
         return result
+
+    async def generate_missing_ai_descriptions(self, limit: int = 10) -> int:
+        """Сгенерировать AI-описания для фильмов без них."""
+        movies = await self._repo.get_top_rated_without_ai(limit)
+        count = 0
+        for movie in movies:
+            text = movie.description or movie.short_description or ""
+            if not text:
+                continue
+            try:
+                ai_description = await self._ai_service.enhance_movie_description(text)
+                if not ai_description or not ai_description.strip():
+                    logger.warning(f"Пустое AI-описание для movie_id={movie.id}")
+                    continue
+                await self._repo.update_ai_description(movie.id, ai_description)
+                count += 1
+            except GigaChatError as e:
+                logger.warning(f"AI-описание для movie_id={movie.id} не сгенерировано: {e}")
+                continue
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"Неожиданная ошибка AI для movie_id={movie.id}: {e}")
+                continue
+            await asyncio.sleep(0.5)
+        logger.info(f"Сгенерировано AI-описаний: {count}/{len(movies)}")
+        return count

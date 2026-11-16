@@ -1,4 +1,5 @@
 import base64
+import time
 import hashlib
 import hmac
 from collections import OrderedDict
@@ -21,6 +22,7 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+MAX_LAUNCH_PARAMS_AGE_SECONDS = 3600
 
 def verify_vk_sign(params: dict, secret: str) -> int:
     """
@@ -53,7 +55,19 @@ def verify_vk_sign(params: dict, secret: str) -> int:
     if not hmac.compare_digest(sign, expected_sign):
         raise SecurityError("Invalid VK sign")
 
+    vk_ts = params.get("vk_ts")
+    if vk_ts is None:
+        raise SecurityError("Missing vk_ts")
+    try:
+        ts = int(vk_ts)
+    except (TypeError, ValueError):
+        raise SecurityError("Invalid vk_ts")
+
+    if abs(time.time() - ts) > MAX_LAUNCH_PARAMS_AGE_SECONDS:
+        raise SecurityError("VK launch params expired")
+
     return int(params["vk_user_id"])
+
 
 
 def create_jwt(vk_id: int) -> str:

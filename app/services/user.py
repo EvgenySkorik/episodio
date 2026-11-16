@@ -167,6 +167,7 @@ class UserService:
 
         if deleted_movie and rating_before and rating_before >= 8.5:
             await self._movie_repo.increment_high_ratings(movie_id)
+            logger.info(f"Фильм добавлен в ТОП")
 
         action = "отсутствует в" if not deleted_movie else "удален из"
         logger.info(f'Фильм {movie_orm.name} {action} коллекции пользователя {user_orm.first_name}')

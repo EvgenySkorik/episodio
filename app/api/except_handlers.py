@@ -12,7 +12,7 @@ from app.core.exceptions.exceptions import (
     MovieNotFoundError,
     SecurityError,
     TokenExpiredError,
-    UserNotFoundError,
+    UserNotFoundError, GigaChatError,
 )
 from app.core.logging import get_logger
 
@@ -90,3 +90,8 @@ def register_exception_handlers(app: FastAPI):
     async def global_exception_handler(request: Request, exc: Exception):
         logger.error(f"Unhandled error: {exc}")
         return JSONResponse(status_code=500, content={"detail": "Внутренняя ошибка сервера"})
+
+    @app.exception_handler(GigaChatError)
+    async def gigachat_error_handler(request: Request, exc: GigaChatError):
+        logger.error(f"GigaChat error: {exc}")
+        return JSONResponse(status_code=503, content={"detail": "Сервис AI временно недоступен"})

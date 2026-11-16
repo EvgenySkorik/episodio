@@ -53,9 +53,13 @@ class CelerySettings(BaseSettings):
     enable_utc: bool = True
     semaphore_limit: int = 5
     semaphore_timeout_rps: float = 0.2
+
     check_series_hour: int = 6
     check_series_minute: int = 6
     check_series_day: int = 1
+
+    generate_ai_hour: int = 5
+    generate_ai_minute: int = 0
 
 class RedisSettings(BaseSettings):
     host: str = "localhost"
@@ -63,6 +67,12 @@ class RedisSettings(BaseSettings):
     password: str = ""
     cache_db: int = 1
     chat_db: int = 2
+
+class GigaAiSettings(BaseSettings):
+    base_url: str = "https://api.giga.chat/v1"
+    credentials: str = ""
+    model: str = "GigaChat-2"
+
 
 class AppSettings(BaseSettings):
     """Класс с общими настройками"""
@@ -79,6 +89,7 @@ class AppSettings(BaseSettings):
     celery: CelerySettings = CelerySettings()
     pagination: PaginationSettings = PaginationSettings()
     redis: RedisSettings = RedisSettings()
+    giga_ai: GigaAiSettings = GigaAiSettings()
 
     secret_jwt_key: str = ""
     hawk_secret_token: str = ""
