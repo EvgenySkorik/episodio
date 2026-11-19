@@ -104,6 +104,7 @@ class AppSettings(BaseSettings):
     log_file_name: str = "KinoMovieApi.log"
     logs_password: str = ""
     log_level: str = "DEBUG"
+    admin_vk_ids: list[int] = []
 
     @property
     def log_file_path(self) -> Path:

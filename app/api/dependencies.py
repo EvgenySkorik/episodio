@@ -14,7 +14,7 @@ from app.db.database import get_db
 from app.infrastructure.hawk_client import HawkClient
 from app.infrastructure.http_client import HTTPClient
 from app.infrastructure.redis_client import RedisCacheClient
-from app.infrastructure.security import get_current_user_impl, verify_vk_sign
+from app.infrastructure.security import get_current_user_impl, verify_vk_sign, get_admin_vk_id
 from app.repositories.movie_rep import MovieRepository
 from app.repositories.user_rep import UserRepository
 from app.services.ai import AiService
@@ -30,13 +30,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/vk")
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> int:
     return get_current_user_impl(token)
 
-
-
 async def get_vk_user_id(request: Request) -> int:
     try:
         return verify_vk_sign(dict(request.query_params), settings.vk.secret_key)
     except SecurityError as e:
         raise HTTPException(status_code=403, detail=str(e))
+
+async def get_admin(
+        vk_id: Annotated[int, Depends(get_current_user)],
+) -> int:
+    return get_admin_vk_id(vk_id)
 
 # ---------------------------------------------------------------------------
 # -----------------------------Репозитории-----------------------------------
@@ -143,6 +146,7 @@ type ServiceAiDep = Annotated[AiService, Depends(get_ai_service)]
 
 type VkUserIdDep = Annotated[int, Depends(get_vk_user_id)]
 type CurrentUserVkIdDep = Annotated[int, Depends(get_current_user)]
+type AdminVkIdDep = Annotated[int, Depends(get_admin)]
 
 type PaginationDep = Annotated[PaginationParams, Depends()]
 

@@ -4,6 +4,13 @@ import Home from './panels/Home';
 import MovieDetail from './panels/MovieDetail';
 import TopMovies from './panels/TopMovies';
 import Chat from './panels/Chat';
+import AdminPanel from './panels/AdminPanel';
+import {checkAdmin, adminLogin} from './utils/api';
+import {Input} from '@/components/ui/input';
+import {Button} from '@/components/ui/button';
+
+// Dev-режим: твой VK ID для локальной проверки админки
+const DEV_VK_ID = 733882553;
 
 export const App = () => {
     const [isInCollection, setIsInCollection] = useState<boolean>(false);
@@ -14,49 +21,50 @@ export const App = () => {
     const [refreshKey, setRefreshKey] = useState(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+    const [adminUnlocked, setAdminUnlocked] = useState<boolean>(false);
+    const [showPasswordModal, setShowPasswordModal] = useState<boolean>(false);
+    const [adminPassword, setAdminPassword] = useState<string>('');
+    const [adminError, setAdminError] = useState<string | null>(null);
 
     useEffect(() => {
         const initApp = async () => {
-
-            // ДЛЯ ЛОКАЛКИ!!! ----
-            if (!window.location.hostname.includes('vk.com')) {
-                  setVkId(10);
-                  setUserName('Тестовый пользователь');
-                  // Получаем JWT через /auth/vk
-                  const response = await fetch('/auth/vk', {
+            // DEV-режим: локальная авторизация без VK
+            if (import.meta.env.DEV) {
+                setVkId(DEV_VK_ID);
+                setUserName('Тестовый пользователь');
+                const response = await fetch('/auth/vk', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ vk_user_id: 10 })
-                  });
-                  if (response.ok) {
+                    body: JSON.stringify({vk_user_id: DEV_VK_ID}),
+                });
+                if (response.ok) {
                     const data = await response.json();
                     localStorage.setItem('jwt', data.access_token);
-                  }
-                  setIsLoading(false);
-                  return;
+                    const adminStatus = await checkAdmin();
+                    setIsAdmin(adminStatus);
                 }
-            // ДЛЯ ЛОКАЛКИ!!! ----
+                setIsLoading(false);
+                return;
+            }
+
+            // PROD: настоящий VK Mini App
             try {
-                // 1. Инициализируем VK Bridge
                 await vkBridge.send('VKWebAppInit');
 
-                // 2. Получаем данные пользователя
                 const user = await vkBridge.send('VKWebAppGetUserInfo');
                 const userId = user.id;
                 setVkId(userId);
                 setUserName(`${user.first_name ?? ''} ${user.last_name ?? ''}`.trim() || `Пользователь ${userId}`);
 
-                // 3. Получаем или обновляем JWT
                 let token = localStorage.getItem('jwt');
 
                 if (!token) {
-                    // Нет токена - получаем новый
                     const response = await fetch('/auth/vk', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ vk_user_id: userId })
+                        body: JSON.stringify({launch_params: window.location.search}),
                     });
-
                     if (response.ok) {
                         const data = await response.json();
                         localStorage.setItem('jwt', data.access_token);
@@ -64,20 +72,16 @@ export const App = () => {
                         throw new Error('Не удалось получить токен');
                     }
                 } else {
-                    // Проверяем, работает ли токен
                     const testResponse = await fetch('/users/me', {
-                        headers: {'Authorization': `Bearer ${token}`}
+                        headers: {'Authorization': `Bearer ${token}`},
                     });
-
                     if (!testResponse.ok) {
-                        // Токен невалидный - получаем новый
                         localStorage.removeItem('jwt');
                         const response = await fetch('/auth/vk', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ vk_user_id: userId })
+                            body: JSON.stringify({vk_user_id: userId}),
                         });
-
                         if (response.ok) {
                             const data = await response.json();
                             localStorage.setItem('jwt', data.access_token);
@@ -87,10 +91,13 @@ export const App = () => {
                     }
                 }
 
-                setIsLoading(false);
+                // Токен гарантированно актуален и сохранен в localStorage
+                const adminStatus = await checkAdmin();
+                setIsAdmin(adminStatus);
 
-            } catch (error) {
-                console.error('Ошибка инициализации:', error);
+                setIsLoading(false);
+            } catch (err) {
+                console.error('Ошибка инициализации:', err);
                 setError('Не удалось подключиться к VK. Попробуйте перезагрузить приложение.');
                 setIsLoading(false);
             }
@@ -98,6 +105,12 @@ export const App = () => {
 
         initApp();
     }, []);
+
+    // Проверяем, админ ли — после того, как vkId установлен
+    useEffect(() => {
+        if (vkId === null) return;
+        checkAdmin().then(setIsAdmin).catch(() => setIsAdmin(false));
+    }, [vkId]);
 
     const openMovie = (id: number, inCollection: boolean) => {
         setMovieId(String(id));
@@ -111,19 +124,66 @@ export const App = () => {
     const openChat = () => setActivePanel('chat');
     const refreshHome = () => setRefreshKey(prev => prev + 1);
 
-    // Загрузка
+    const openAdmin = () => {
+        if (adminUnlocked) {
+            setActivePanel('admin');
+        } else {
+            setShowPasswordModal(true);
+            setAdminError(null);
+        }
+    };
+
+    const handleAdminLogin = async () => {
+        const ok = await adminLogin(adminPassword);
+        if (ok) {
+            setAdminUnlocked(true);
+            setShowPasswordModal(false);
+            setAdminPassword('');
+            setActivePanel('admin');
+        } else {
+            setAdminError('Неверный пароль');
+        }
+    };
+
+    const closePasswordModal = () => {
+        setShowPasswordModal(false);
+        setAdminPassword('');
+        setAdminError(null);
+    };
+
+    const passwordModal = showPasswordModal ? (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm space-y-4">
+                <h2 className="text-lg font-bold text-white">Вход в админку</h2>
+                <Input
+                    type="password"
+                    placeholder="Пароль"
+                    value={adminPassword}
+                    onChange={(e) => setAdminPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAdminLogin()}
+                    autoFocus
+                />
+                {adminError && <p className="text-red-400 text-sm">{adminError}</p>}
+                <div className="flex gap-2">
+                    <Button onClick={handleAdminLogin} className="flex-1">Войти</Button>
+                    <Button variant="ghost" onClick={closePasswordModal}>Отмена</Button>
+                </div>
+            </div>
+        </div>
+    ) : null;
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-screen bg-gray-950 text-white">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                    <div
+                        className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
                     <div>Загрузка...</div>
                 </div>
             </div>
         );
     }
 
-    // Ошибка
     if (error) {
         return (
             <div className="flex items-center justify-center h-screen bg-gray-950 text-white">
@@ -142,16 +202,29 @@ export const App = () => {
         );
     }
 
-    // Приложение
     if (activePanel === 'home') {
         return (
-            <Home
-                key={refreshKey}
-                id="home"
-                openMovie={openMovie}
-                vkId={vkId!}
-                openTop={openTop}
-                openChat={openChat}
+            <>
+                <Home
+                    key={refreshKey}
+                    id="home"
+                    openMovie={openMovie}
+                    vkId={vkId!}
+                    openTop={openTop}
+                    openChat={openChat}
+                    openAdmin={openAdmin}
+                    isAdmin={isAdmin}
+                />
+                {passwordModal}
+            </>
+        );
+    }
+
+    if (activePanel === 'admin') {
+        return (
+            <AdminPanel
+                id="admin"
+                goHome={goHome}
             />
         );
     }

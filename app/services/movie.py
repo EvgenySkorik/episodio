@@ -237,7 +237,7 @@ class MovieService:
 
         return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
 
-    @cached(ttl=1800)
+    @cached(ttl=600)
     async def get_top_rated(self, limit: int, page: int = 1) -> list[MovieTopResponse]:
         """Получить список топовых фильмов/сериалов с лимитом.
 
@@ -256,6 +256,13 @@ class MovieService:
                 **movie_resp.model_dump(exclude_unset=True),
                 ai_description=ai_description,
             ))
+        await self._hawk.send_event(
+            message="Получен список топовых фильмов",
+            extra={
+                "movies": result,
+                "status": "success"
+            }
+        )
         return result
 
     async def generate_missing_ai_descriptions(self, limit: int = 10) -> int:
@@ -272,6 +279,13 @@ class MovieService:
                     logger.warning(f"Пустое AI-описание для movie_id={movie.id}")
                     continue
                 await self._repo.update_ai_description(movie.id, ai_description)
+                await self._hawk.send_event(
+                    message="Обновлено описание фильма с помощью ИИ",
+                    extra={
+                        "movie": movie,
+                        "status": "success"
+                    }
+                )
                 count += 1
             except GigaChatError as e:
                 logger.warning(f"AI-описание для movie_id={movie.id} не сгенерировано: {e}")
