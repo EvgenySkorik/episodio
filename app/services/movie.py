@@ -3,14 +3,19 @@ from collections.abc import Sequence
 
 from app.clients.kp_client import KinopoiskClient
 from app.core.config import settings
-from app.core.exceptions.exceptions import MovieNotFoundError, GigaChatError
+from app.core.exceptions.exceptions import GigaChatError, MovieNotFoundError
 from app.core.logging import get_logger
 from app.infrastructure.cache_decorator import cached
 from app.infrastructure.hawk_client import HawkClient
 from app.infrastructure.redis_client import RedisCacheClient
 from app.repositories.bases.base_movie import BaseMovieRepository
 from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
-from app.schemas.movie_schemas import MovieCreate, MovieResponse, MovieUpdate, MovieTopResponse
+from app.schemas.movie_schemas import (
+    MovieCreate,
+    MovieResponse,
+    MovieTopResponse,
+    MovieUpdate,
+)
 from app.services.ai import AiService
 from app.services.notification import NotificationService
 
@@ -21,13 +26,13 @@ class MovieService:
     """Сервис для работы с Movie"""
 
     def __init__(
-            self,
-            repository: BaseMovieRepository,
-            kinopoisk_client: KinopoiskClient,
-            notification_service: NotificationService,
-            ai_service: AiService,
-            hawk: HawkClient,
-            cached_client: RedisCacheClient,
+        self,
+        repository: BaseMovieRepository,
+        kinopoisk_client: KinopoiskClient,
+        notification_service: NotificationService,
+        ai_service: AiService,
+        hawk: HawkClient,
+        cached_client: RedisCacheClient,
     ):
         self._repo = repository
         self._kino_client = kinopoisk_client
@@ -40,7 +45,9 @@ class MovieService:
         """Получить все фильмы, отдает схему"""
         movies_orm = await self._repo.get_all()
         logger.info(f"Получен список всех фильмов, количество: {len(movies_orm)}")
-        return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
+        return [
+            MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm
+        ]
 
     async def get_movie_by_id(self, movie_id: int) -> MovieResponse:
         """Получить фильм по ID, отдает схему"""
@@ -66,7 +73,10 @@ class MovieService:
         movies_orm = await self._repo.search_by_query(movie_name, limit=10)
         if movies_orm:
             logger.info(f"Фильм '{movie_name}' найден в БД")
-            return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
+            return [
+                MovieResponse.model_validate(m, from_attributes=True)
+                for m in movies_orm
+            ]
 
         logger.info(f"Фильм '{movie_name}' не найден в БД, запрос к Кинопоиску")
         kinopoisk_movies = await self._kino_client.search_by_name(movie_name, limit=5)
@@ -88,7 +98,9 @@ class MovieService:
         """Получает количество оставшихся токенов API Кинопоиска"""
         return await self._kino_client.get_token_balance()
 
-    async def create_movie(self, movie: KinopoiskMovieResponse | MovieCreate) -> MovieResponse:
+    async def create_movie(
+        self, movie: KinopoiskMovieResponse | MovieCreate
+    ) -> MovieResponse:
         """Создает фильм по схеме от АПИ или Create, отдает схему"""
         movie_orm = await self._repo.create(movie.model_dump())
         logger.info(f"Фильм '{movie_orm.name}' создан, id={movie_orm.id}")
@@ -114,7 +126,7 @@ class MovieService:
         if not movie_orm:
             logger.warning(f"Фильм с ID {movie_id} не найден при удалении")
             raise MovieNotFoundError(f"Фильм с ID {movie_id} не найден")
-        logger.info(f'Удален из БД фильм с id={movie_id}')
+        logger.info(f"Удален из БД фильм с id={movie_id}")
         await self._hawk.send_event(
             message="Удален из БД фильм",
             extra={"id": movie_id},
@@ -137,20 +149,17 @@ class MovieService:
         await self._check_notify_all(tracked)
         await self._hawk.send_event(
             message="Проверка обновления сериалов",
-            extra={
-                "total_series": len(tracked),
-                "status": "success"
-            }
+            extra={"total_series": len(tracked), "status": "success"},
         )
 
     async def _check_update_one(
-            self,
-            mov_id: int,
-            kp_id: int,
-            current_episodes: int,
-            user_id: int,
-            name: str,
-            semaphore: asyncio.Semaphore,
+        self,
+        mov_id: int,
+        kp_id: int,
+        current_episodes: int,
+        user_id: int,
+        name: str,
+        semaphore: asyncio.Semaphore,
     ) -> dict[str, int | str] | None:
         """
         Проверяет обновления сериала в Кинопоиске и обновляет БД.
@@ -176,7 +185,9 @@ class MovieService:
         current = current_episodes or 0
         if new_episodes > current:
             await self._repo.update(mov_id, new_data_episodes)
-            logger.info(f"Сериал {mov_id} (kp_id={kp_id}) обновлён: {current_episodes} → {new_episodes}")
+            logger.info(
+                f"Сериал {mov_id} (kp_id={kp_id}) обновлён: {current_episodes} → {new_episodes}"
+            )
             return {"user_id": user_id, "name": name, "new_episodes": new_episodes}
         return None
 
@@ -189,9 +200,8 @@ class MovieService:
         """
         sem = asyncio.Semaphore(settings.celery.semaphore_limit)
 
-        tasks = [self._check_update_one(
-            mov_id, kp_id, current, user_id, name, sem
-        )
+        tasks = [
+            self._check_update_one(mov_id, kp_id, current, user_id, name, sem)
             for mov_id, kp_id, current, user_id, name in serials
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -207,61 +217,66 @@ class MovieService:
                 )
 
     @cached(ttl=60)
-    async def get_all_movies_paginated(self, limit: int, page: int) -> list[MovieResponse]:
+    async def get_all_movies_paginated(
+        self, limit: int, page: int
+    ) -> list[MovieResponse]:
         """Получить список фильмов с пагинацией.
 
-    Args:
-        limit: Количество записей на странице,
-        page: Страница записей.
+        Args:
+            limit: Количество записей на странице,
+            page: Страница записей.
 
-    Returns:
-        list[MovieResponse]: Список фильмов для текущей страницы.
-    """
+        Returns:
+            list[MovieResponse]: Список фильмов для текущей страницы.
+        """
         offset = (page - 1) * limit
         movies_orm = await self._repo.get_all_pagination(limit=limit, offset=offset)
 
-        return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
+        return [
+            MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm
+        ]
 
     @cached(ttl=1800)
     async def get_all_movies_popular(self, limit: int) -> list[MovieResponse]:
         """Получить список популярных фильмов с лимитом.
 
-    Args:
-        limit: Максимальное количество фильмов в ответе
+        Args:
+            limit: Максимальное количество фильмов в ответе
 
-    Returns:
-        list[MovieResponse]: Список схем популярных фильмов.
-    """
+        Returns:
+            list[MovieResponse]: Список схем популярных фильмов.
+        """
 
         movies_orm = await self._repo.get_popular(limit=limit)
 
-        return [MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm]
+        return [
+            MovieResponse.model_validate(m, from_attributes=True) for m in movies_orm
+        ]
 
     @cached(ttl=600)
     async def get_top_rated(self, limit: int, page: int = 1) -> list[MovieTopResponse]:
         """Получить список топовых фильмов/сериалов с лимитом.
 
-    Args:
-        limit: Максимальное количество фильмов в ответе
+        Args:
+            limit: Максимальное количество фильмов в ответе
 
-    Returns:
-        list[MovieTopResponse]: Список схем топовых фильмов.
-    """
+        Returns:
+            list[MovieTopResponse]: Список схем топовых фильмов.
+        """
         offset = (page - 1) * limit
         rows = await self._repo.get_top_rated(limit=limit, offset=offset)
         result = []
         for movie, ai_description in rows:
             movie_resp = MovieResponse.model_validate(movie, from_attributes=True)
-            result.append(MovieTopResponse(
-                **movie_resp.model_dump(exclude_unset=True),
-                ai_description=ai_description,
-            ))
+            result.append(
+                MovieTopResponse(
+                    **movie_resp.model_dump(exclude_unset=True),
+                    ai_description=ai_description,
+                )
+            )
         await self._hawk.send_event(
             message="Получен список топовых фильмов",
-            extra={
-                "movies": result,
-                "status": "success"
-            }
+            extra={"movies": result, "status": "success"},
         )
         return result
 
@@ -281,14 +296,13 @@ class MovieService:
                 await self._repo.update_ai_description(movie.id, ai_description)
                 await self._hawk.send_event(
                     message="Обновлено описание фильма с помощью ИИ",
-                    extra={
-                        "movie": movie,
-                        "status": "success"
-                    }
+                    extra={"movie": movie, "status": "success"},
                 )
                 count += 1
             except GigaChatError as e:
-                logger.warning(f"AI-описание для movie_id={movie.id} не сгенерировано: {e}")
+                logger.warning(
+                    f"AI-описание для movie_id={movie.id} не сгенерировано: {e}"
+                )
                 continue
             except Exception as e:  # noqa: BLE001
                 logger.error(f"Неожиданная ошибка AI для movie_id={movie.id}: {e}")

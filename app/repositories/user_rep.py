@@ -28,7 +28,9 @@ class UserRepository(BaseUserRepository):
         result = await self._session.execute(stmt)
         user = result.scalars().first()
 
-        logger.info(f"Получили модель из БД по id: first_name={user.first_name if user else None}")
+        logger.info(
+            f"Получили модель из БД по id: first_name={user.first_name if user else None}"
+        )
         return user
 
     async def get_by_vk_id(self, vk_id: int) -> User | None:
@@ -44,8 +46,10 @@ class UserRepository(BaseUserRepository):
         result = await self._session.execute(stmt)
         user = result.scalars().first()
 
-        logger.info(f"Получили модель из БД по VK ID: first_name={user.first_name if user else None}")
-        logger.info(f'Возвращаем {user}')
+        logger.info(
+            f"Получили модель из БД по VK ID: first_name={user.first_name if user else None}"
+        )
+        logger.info(f"Возвращаем {user}")
         return user
 
     async def create(self, user: dict) -> User:
@@ -69,7 +73,11 @@ class UserRepository(BaseUserRepository):
         await self._session.commit()
         await self._session.refresh(user_orm)
 
-        stmt = select(User).where(User.id == user_id).options(selectinload(User.movie_collections))
+        stmt = (
+            select(User)
+            .where(User.id == user_id)
+            .options(selectinload(User.movie_collections))
+        )
         result = await self._session.execute(stmt)
         logger.info(f"Обновили пользователя {user_orm.first_name}")
         return result.scalars().first()
@@ -92,15 +100,18 @@ class UserRepository(BaseUserRepository):
 
     async def rate_movie(self, user_id: int, movie_id: int, rating: float) -> None:
         """Добавить в связь UserMovie рейтинг от пользователя"""
-        stmt = update(UserMovie).where(
-            UserMovie.user_id == user_id,
-            UserMovie.movie_id == movie_id
-        ).values(user_rating=rating)
+        stmt = (
+            update(UserMovie)
+            .where(UserMovie.user_id == user_id, UserMovie.movie_id == movie_id)
+            .values(user_rating=rating)
+        )
         await self._session.execute(stmt)
         await self._session.commit()
         logger.info("Добавлен рейтинг в БД")
 
-    async def get_movies_with_user_rating(self, vk_id: int) -> Sequence[tuple[Movie, UserMovie]]:
+    async def get_movies_with_user_rating(
+        self, vk_id: int
+    ) -> Sequence[tuple[Movie, UserMovie]]:
         """Получить список фильмов пользователя с его рейтингом и статусом просмотра по VK ID."""
         stmt = (
             select(Movie, UserMovie)
@@ -111,32 +122,37 @@ class UserRepository(BaseUserRepository):
         )
         result = (await self._session.execute(stmt)).all()
         logger.info("Получен список фильмов с рейтингом из БД")
-        return result # type: ignore
+        return result  # type: ignore
 
     async def add_movie_to_user(self, user_id: int, movie_id: int) -> bool:
         """Добавить фильм/сериал к модели User в коллекцию, только для PostgreSQL"""
-        stmt = pg_insert(UserMovie).values(
-            user_id=user_id,
-            movie_id=movie_id,
-        ).on_conflict_do_nothing()
-
-        result = await self._session.execute(stmt)
-        await self._session.commit()
-        return result.rowcount > 0 # type: ignore
-
-
-    async def delete_movie_from_user(self, user_id: int, movie_id: int) -> bool:
-        """Удалить фильм/сериал у модели User из коллекции"""
-        stmt = delete(UserMovie).where(
-            UserMovie.user_id==user_id,
-            UserMovie.movie_id==movie_id,
+        stmt = (
+            pg_insert(UserMovie)
+            .values(
+                user_id=user_id,
+                movie_id=movie_id,
+            )
+            .on_conflict_do_nothing()
         )
 
         result = await self._session.execute(stmt)
         await self._session.commit()
-        return result.rowcount > 0 # type: ignore
+        return result.rowcount > 0  # type: ignore
 
-    async def toggle_tracking(self, user_id: int, movie_id: int, is_tracking: bool) -> bool:
+    async def delete_movie_from_user(self, user_id: int, movie_id: int) -> bool:
+        """Удалить фильм/сериал у модели User из коллекции"""
+        stmt = delete(UserMovie).where(
+            UserMovie.user_id == user_id,
+            UserMovie.movie_id == movie_id,
+        )
+
+        result = await self._session.execute(stmt)
+        await self._session.commit()
+        return result.rowcount > 0  # type: ignore
+
+    async def toggle_tracking(
+        self, user_id: int, movie_id: int, is_tracking: bool
+    ) -> bool:
         """Отслеживать или нет сериал у модели User в связи UserMovie - is_tracking"""
         stmt = (
             update(UserMovie)
@@ -145,7 +161,7 @@ class UserRepository(BaseUserRepository):
         )
         result = await self._session.execute(stmt)
         await self._session.commit()
-        return result.rowcount > 0 # type: ignore
+        return result.rowcount > 0  # type: ignore
 
     async def get_user_movie(self, user_id: int, movie_id: int) -> UserMovie | None:
         """Получить связь UserMovie по user_id и movie_id."""

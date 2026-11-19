@@ -1,4 +1,4 @@
-from gigachat import GigaChat, Chat, Messages, MessagesRole, RateLimitError, ServerError
+from gigachat import Chat, GigaChat, Messages, MessagesRole, RateLimitError, ServerError
 
 from app.core.config import AppSettings
 from app.core.exceptions.exceptions import GigaChatError

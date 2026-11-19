@@ -1,11 +1,16 @@
 # BETA
 from datetime import UTC, datetime
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from app.core import logging
 from app.infrastructure.redis_client import RedisChatClient
 from app.infrastructure.websocket_manager import ConnectionManager
 
 chat_rout = APIRouter(tags=["chat"])
+
+logger = logging.get_logger(__name__)
+
 
 @chat_rout.websocket("/ws/chat")
 async def chat_websocket(websocket: WebSocket) -> None:
@@ -28,5 +33,6 @@ async def chat_websocket(websocket: WebSocket) -> None:
             await manager.broadcast(payload)
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-    except Exception:
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Ошибка в WebSocket соединении: {e}")
         manager.disconnect(websocket)

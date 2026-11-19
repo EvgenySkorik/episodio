@@ -42,7 +42,9 @@ def cached(ttl: int = 60, key_prefix: str = ""):
                     json_result = result.model_dump()
                 else:
                     json_result = result
-                await cached_client.setex(cache_key, ttl, json.dumps(json_result, default=str))
+                await cached_client.setex(
+                    cache_key, ttl, json.dumps(json_result, default=str)
+                )
                 logger.debug(f"Кеш сохранён: {cache_key} (TTL={ttl}с)")
             except (ConnectionError, TimeoutError) as e:
                 logger.warning(f"Ошибка записи в кеш: {e}")

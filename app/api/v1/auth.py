@@ -1,14 +1,12 @@
-import json
 from urllib.parse import parse_qsl
 
-from fastapi import APIRouter, HTTPException, Request, Body
+from fastapi import APIRouter, HTTPException, Request
 
-from app.api.dependencies import ServiceUserDep, ServiceAiDep
+from app.api.dependencies import ServiceUserDep
 from app.core.config import settings
 from app.core.exceptions.exceptions import SecurityError
 from app.core.logging import get_logger
 from app.infrastructure.security import create_jwt, verify_vk_sign
-from app.schemas.user_schemas import UserLoginPass
 
 logger = get_logger(__name__)
 
@@ -17,15 +15,15 @@ auth_rout = APIRouter(prefix="/auth", tags=["auth"])
 
 @auth_rout.post("/vk")
 async def auth_vk(
-        request: Request,
-        user_service: ServiceUserDep,
+    request: Request,
+    user_service: ServiceUserDep,
 ) -> dict[str, str]:
     """
-        Авторизация VK Mini App.
+    Авторизация VK Mini App.
 
-        Принимает launch-параметры VK (query-строку или тело), проверяет
-        подпись `sign` секретным ключом приложения и выдаёт JWT.
-        """
+    Принимает launch-параметры VK (query-строку или тело), проверяет
+    подпись `sign` секретным ключом приложения и выдаёт JWT.
+    """
     body: dict = {}
     try:
         body = await request.json()
@@ -63,4 +61,3 @@ async def auth_vk(
     token = create_jwt(vk_id)
     logger.info(f"Успешная авторизация VK user_id={vk_id}")
     return {"access_token": token, "token_type": "bearer"}
-

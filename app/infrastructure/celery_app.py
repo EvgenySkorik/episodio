@@ -9,7 +9,7 @@ celery_app = Celery(
     backend=settings.celery.result_backend,
 )
 
-celery_app.autodiscover_tasks(['app.tasks.movie_tasks', 'app.tasks.notification_tasks'])
+celery_app.autodiscover_tasks(["app.tasks.movie_tasks", "app.tasks.notification_tasks"])
 
 celery_app.conf.update(
     task_serializer=settings.celery.task_serializer,
@@ -21,25 +21,25 @@ celery_app.conf.update(
 
 
 celery_app.conf.beat_schedule = {
-    'check-new-series': {
-        'task': 'check_series_updates',
-        'schedule': crontab(
+    "check-new-series": {
+        "task": "check_series_updates",
+        "schedule": crontab(
             hour=settings.celery.check_series_hour,
             minute=settings.celery.check_series_minute,
-            day_of_week=f'*/{settings.celery.check_series_day}'),
+            day_of_week=f"*/{settings.celery.check_series_day}",
+        ),
     },
-    'update-top-movies': {
-        'task': 'generate_missing_ai_descriptions',
-        'schedule': crontab(
+    "update-top-movies": {
+        "task": "generate_missing_ai_descriptions",
+        "schedule": crontab(
             hour=settings.celery.generate_ai_hour,
             minute=settings.celery.generate_ai_minute,
-            day_of_week=f'*/{settings.celery.check_series_day}'),
+            day_of_week=f"*/{settings.celery.check_series_day}",
+        ),
     },
-
     # 'send-test-notification': {
     #     'task': 'send_notification_series',
     #     'schedule': 60.0,  # Каждые 60 секунд!
     #     'args': (733882553,),      # Твой тестовый user_id = 10
     # },
 }
-

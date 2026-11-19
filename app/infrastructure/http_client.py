@@ -7,6 +7,7 @@ logger = get_logger(__name__)
 
 class HTTPClient:
     """Асинхронный HTTP-клиент с переиспользованием соединений."""
+
     def __init__(self, timeout: float = 10.0) -> None:
         transport = httpx.AsyncHTTPTransport(retries=3)
         self._client = httpx.AsyncClient(
@@ -16,12 +17,12 @@ class HTTPClient:
         )
 
     async def request(
-            self,
-            method: str,
-            url: str,
-            headers: dict | None = None,
-            params: dict | None = None,
-            json: dict | None = None,
+        self,
+        method: str,
+        url: str,
+        headers: dict | None = None,
+        params: dict | None = None,
+        json: dict | None = None,
     ) -> httpx.Response:
         """Выполняет HTTP-запрос."""
         response = await self._client.request(

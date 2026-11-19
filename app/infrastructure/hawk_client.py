@@ -15,12 +15,15 @@ class HawkEvent(Exception):
 
 class HawkClient:
     """Клиент для работы с Hawk."""
+
     def __init__(self, token: str | None = None) -> None:
         self._token = token or settings.hawk_secret_token
         self._hawk = Hawk(self._token)
         logger.info("HawkClient инициализирован")
 
-    async def send_event(self, message: str, level: str = "info", extra: dict | None = None) -> None:
+    async def send_event(
+        self, message: str, level: str = "info", extra: dict | None = None
+    ) -> None:
         """Отправляет событие в Hawk."""
         try:
             event = HawkEvent(message)

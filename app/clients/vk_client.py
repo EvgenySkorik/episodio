@@ -12,6 +12,7 @@ logger = get_logger(__name__)
 
 class VkClient:
     """Клиент для работы с VK API."""
+
     def __init__(self, http_client: HTTPClient, settings: AppSettings) -> None:
         self._settings = settings
         self._http = http_client
@@ -28,9 +29,7 @@ class VkClient:
 
         try:
             response = await self._http.request(
-                "GET",
-                f"{self._api_url}{method}",
-                params=params
+                "GET", f"{self._api_url}{method}", params=params
             )
             response.raise_for_status()
             data: dict[str, Any] = response.json()
@@ -43,7 +42,9 @@ class VkClient:
 
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error from VK: {e.response.status_code}")
-            raise NotificationError(f"VK API unavailable: {e.response.status_code}") from e
+            raise NotificationError(
+                f"VK API unavailable: {e.response.status_code}"
+            ) from e
         except Exception as e:
             logger.error(f"Unexpected error calling VK API: {e}")
             raise NotificationError("Failed to call VK API") from e
@@ -60,5 +61,5 @@ class VkClient:
                 "user_id": user_id,
                 "message": message,
                 "random_id": 0,
-            }
+            },
         )

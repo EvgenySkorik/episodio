@@ -1,6 +1,3 @@
-import asyncio
-import atexit
-import signal
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -64,6 +61,7 @@ def get_giga_client() -> GigaAiClient:
 @dataclass(slots=True)
 class Container:
     """Контейнер всех сервисов приложения."""
+
     movie_service: MovieService
     user_service: UserService
     notification_service: NotificationService
@@ -73,8 +71,8 @@ class Container:
 @asynccontextmanager
 async def create_container() -> AsyncIterator[Container]:
     """Создаёт контейнер со всеми сервисами.
-        Одна сессия и один HTTPClient на все сервисы.
-        """
+    Одна сессия и один HTTPClient на все сервисы.
+    """
     session = AsyncSessionLocal()
     http_client = get_http_client()
     hawk_client = get_hawk_client()

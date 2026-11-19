@@ -7,9 +7,9 @@ from app.schemas.kinopoisk_schemas import KinopoiskMovieResponse
 logger = get_logger(__name__)
 
 
-
 class KinopoiskClient:
     """Клиент для работы с АПИ Кинопоиска"""
+
     def __init__(self, settings: AppSettings, http_client: HTTPClient):
         self._settings = settings
         self._http_client = http_client
@@ -25,7 +25,6 @@ class KinopoiskClient:
         response.raise_for_status()
 
         return response.json()
-
 
     async def get_series_details(self, kp_id: int, limit: int = 100) -> dict:
         """Асинхронно получает данные о Movie через API Кинопоиска по id
@@ -51,8 +50,9 @@ class KinopoiskClient:
             "total_episodes": sum(s.get("episodesCount", 0) for s in seasons),
         }
 
-
-    async def search_by_name(self, message: str, limit: int = 10, page: int = 1) -> list[KinopoiskMovieResponse]:
+    async def search_by_name(
+        self, message: str, limit: int = 10, page: int = 1
+    ) -> list[KinopoiskMovieResponse]:
         """Асинхронно получает данные о фильмах через API Кинопоиска по названию"""
         logger.info(f"Поиск в Кинопоиске: '{message}'")
         params = {
@@ -108,4 +108,3 @@ class KinopoiskClient:
             results.append(movie_schema)
 
         return results
-

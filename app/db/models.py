@@ -29,11 +29,14 @@ class Movie(Base):
     logo: Mapped[str | None]
     poster: Mapped[str | None]
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(), onupdate=func.now()
+    )
     total_seasons: Mapped[int | None] = mapped_column(default=0)
     total_episodes: Mapped[int | None] = mapped_column(default=0)
-    last_checked_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
-
+    last_checked_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(), onupdate=func.now()
+    )
 
     saved_by_users: Mapped[list["User"]] = relationship(
         "User",
@@ -67,8 +70,12 @@ class User(Base):
 
 class UserMovie(Base):
     __tablename__ = "user_movie"
-    movie_id: Mapped[int] = mapped_column(ForeignKey("movie.id", ondelete="CASCADE"), primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), primary_key=True)
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movie.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
+    )
 
     is_watched: Mapped[bool] = mapped_column(default=False)
     user_rating: Mapped[float] = mapped_column(nullable=True)
@@ -79,6 +86,7 @@ class UserMovie(Base):
         back_populates="user_movies",
         overlaps="movie_collections,saved_by_users",
     )
+
 
 class MovieRatingStat(Base):
     __tablename__ = "movie_rating_stat"
