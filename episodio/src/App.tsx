@@ -29,14 +29,21 @@ export const App = () => {
 
     useEffect(() => {
         const initApp = async () => {
+            // Функция для получения чистых параметров (без '?')
+            const getCleanParams = () => {
+                const s = window.location.search;
+                return s.startsWith('?') ? s.substring(1) : s;
+            };
+
             // DEV-режим: локальная авторизация без VK
             if (import.meta.env.DEV) {
                 setVkId(DEV_VK_ID);
                 setUserName('Тестовый пользователь');
+
                 const response = await fetch('/auth/vk', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({vk_user_id: DEV_VK_ID}),
+                    body: JSON.stringify({launch_params: getCleanParams()}),
                 });
                 if (response.ok) {
                     const data = await response.json();
@@ -51,7 +58,6 @@ export const App = () => {
             // PROD: настоящий VK Mini App
             try {
                 await vkBridge.send('VKWebAppInit');
-
                 const user = await vkBridge.send('VKWebAppGetUserInfo');
                 const userId = user.id;
                 setVkId(userId);
@@ -59,42 +65,38 @@ export const App = () => {
 
                 let token = localStorage.getItem('jwt');
 
-                if (!token) {
+                const fetchToken = async () => {
                     const response = await fetch('/auth/vk', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({launch_params: window.location.search}),
+                        body: JSON.stringify({launch_params: getCleanParams()}),
                     });
-                    if (response.ok) {
-                        const data = await response.json();
-                        localStorage.setItem('jwt', data.access_token);
-                    } else {
-                        throw new Error('Не удалось получить токен');
+
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        console.error("Auth failed:", response.status, errText);
+                        throw new Error(`Ошибка авторизации: ${response.status}`);
                     }
+                    const data = await response.json();
+                    localStorage.setItem('jwt', data.access_token);
+                };
+
+                if (!token) {
+                    await fetchToken();
                 } else {
+                    // Проверяем валидность старого токена
                     const testResponse = await fetch('/users/me', {
                         headers: {'Authorization': `Bearer ${token}`},
                     });
+
                     if (!testResponse.ok) {
                         localStorage.removeItem('jwt');
-                        const response = await fetch('/auth/vk', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({vk_user_id: userId}),
-                        });
-                        if (response.ok) {
-                            const data = await response.json();
-                            localStorage.setItem('jwt', data.access_token);
-                        } else {
-                            throw new Error('Не удалось обновить токен');
-                        }
+                        await fetchToken();
                     }
                 }
 
-                // Токен гарантированно актуален и сохранен в localStorage
                 const adminStatus = await checkAdmin();
                 setIsAdmin(adminStatus);
-
                 setIsLoading(false);
             } catch (err) {
                 console.error('Ошибка инициализации:', err);

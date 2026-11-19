@@ -45,7 +45,7 @@ async def auth_vk(
                 return {"access_token": token, "token_type": "bearer"}
         raise HTTPException(400, "Missing VK launch params")
 
-    params = dict(parse_qsl(raw_params.lstrip("?")))
+    params = dict(parse_qsl(raw_params.lstrip("?"), keep_blank_values=True))
 
     try:
         # ХАРДКОР ДЛЯ ЛОКИ — удалить перед продом
