@@ -6,6 +6,7 @@ from app.db.models import Movie
 
 class BaseMovieRepository(ABC):
     """Базовый интерфейс репозитория для CRUD-операций c Movie"""
+
     @abstractmethod
     async def get_all(self) -> list[Movie]:
         pass
@@ -35,7 +36,9 @@ class BaseMovieRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_tracked_series(self) -> Sequence[tuple[int, int, int | None, int, str]]:
+    async def get_tracked_series(
+        self,
+    ) -> Sequence[tuple[int, int, int | None, int, str]]:
         pass
 
     @abstractmethod
@@ -50,13 +53,14 @@ class BaseMovieRepository(ABC):
     async def increment_high_ratings(self, movie_id: int) -> None: ...
 
     @abstractmethod
-    async def get_top_rated(self, limit: int, offset: int = 0) -> Sequence[tuple[Movie, str | None]]: ...
+    async def get_top_rated(
+        self, limit: int, offset: int = 0
+    ) -> Sequence[tuple[Movie, str | None]]: ...
 
     @abstractmethod
     async def get_top_rated_without_ai(self, limit: int) -> Sequence[Movie]: ...
 
     @abstractmethod
-    async def update_ai_description(self, movie_id: int, ai_description: str) -> None: ...
-
-
-
+    async def update_ai_description(
+        self, movie_id: int, ai_description: str
+    ) -> None: ...

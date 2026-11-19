@@ -24,8 +24,8 @@ def check_series_updates(self: Any) -> None:
             return await c.movie_service.check_series_updates()
 
     try:
-        count = asyncio.run(_run())
-        logger.info(f"Задача check_series_updates завершена успешно")
+        asyncio.run(_run())
+        logger.info("Задача check_series_updates завершена успешно")
     except Exception as exc:  # noqa: BLE001
         logger.error(f"Ошибка в задаче check_series_updates: {exc}")
         raise self.retry(exc=exc)
@@ -48,7 +48,9 @@ def generate_missing_ai_descriptions(self: Any) -> None:
 
     try:
         count = asyncio.run(_run())
-        logger.info(f"Задача generate_missing_ai_descriptions завершена, обработано: {count}")
+        logger.info(
+            f"Задача generate_missing_ai_descriptions завершена, обработано: {count}"
+        )
     except Exception as exc:  # noqa: BLE001
         logger.error(f"Ошибка в задаче generate_missing_ai_descriptions: {exc}")
         raise self.retry(exc=exc)

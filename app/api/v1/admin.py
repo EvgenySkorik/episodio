@@ -1,9 +1,7 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 
-from app.api.dependencies import ServiceAiDep, AdminVkIdDep
-from app.core.config import settings
-from app.core.exceptions.exceptions import TestError
+from app.api.dependencies import AdminVkIdDep, ServiceAiDep
 from app.core.logging import get_logger
 from app.infrastructure.security import (
     read_log_file,
@@ -35,21 +33,18 @@ async def admin_login(
         raise HTTPException(403, "Неверный пароль")
     return {"ok": True}
 
+
 @admin_rout.post("/logs", summary="Получить логи")
 async def get_logs(
     _vk_id: AdminVkIdDep,
 ) -> JSONResponse:
     """
-        Получить содержимое файла логов.
+    Получить содержимое файла логов.
     """
     logs = await read_log_file()
 
     return JSONResponse(
-        status_code=200,
-        content={
-        "logs": logs,
-        "size": len(logs.split('\n'))
-        }
+        status_code=200, content={"logs": logs, "size": len(logs.split("\n"))}
     )
 
 
@@ -61,13 +56,8 @@ async def get_latest_logs(
     """Получить последние N строк логов"""
     logs = await read_log_lines(lines)
 
-    return JSONResponse(
-        status_code=200,
-        content={
-            "logs": logs,
-            "lines": lines
-        }
-    )
+    return JSONResponse(status_code=200, content={"logs": logs, "lines": lines})
+
 
 @admin_rout.post("/ai-balance", summary="Баланс GigaChat")
 async def ai_balance(
@@ -76,10 +66,10 @@ async def ai_balance(
 ):
     return await ai_service._client.balance()
 
+
 @admin_rout.post("/ai-models", summary="Модели для GigaChat")
 async def ai_models(
     _vk_id: AdminVkIdDep,
     ai_service: ServiceAiDep,
 ):
     return await ai_service._client.models()
-

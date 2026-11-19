@@ -33,6 +33,7 @@ class MovieWithUserRatingResponse(MovieResponse):
 
 class MovieTopResponse(MovieResponse):
     """Схема для топа: фильм + рейтинг пользователя + AI-описание."""
+
     user_rating: float | None = 0
     ai_description: str | None = None
 
@@ -53,11 +54,11 @@ class MovieCreate(BaseModel):
     logo: str | None
     poster: str | None
 
-    @field_validator('year')
+    @field_validator("year")
     @classmethod
     def not_by_next_year(cls, value: int) -> int:
         if value > datetime.now(UTC).year:
-            raise ValueError(f'Year {value} cannot be in the future')
+            raise ValueError(f"Year {value} cannot be in the future")
         return value
 
 

@@ -10,6 +10,7 @@ class PaginationSettings(BaseSettings):
 
 class DatabaseSettings(BaseSettings):
     """Класс с настройками PostgreSQL"""
+
     server: str = ""
     user: str = ""
     password: str = ""
@@ -24,6 +25,7 @@ class DatabaseSettings(BaseSettings):
 
 class KinopoiskSettings(BaseSettings):
     """Класс с настройками АПИ Кинопоиска"""
+
     url: str = "https://api.poiskkino.dev/"
     api_key: str = ""
 
@@ -44,6 +46,7 @@ class VkSettings(BaseSettings):
 
 class CelerySettings(BaseSettings):
     """Класс с настройками Celery, Redis"""
+
     broker_url: str = ""
     result_backend: str = ""
     task_serializer: str = "json"
@@ -61,12 +64,14 @@ class CelerySettings(BaseSettings):
     generate_ai_hour: int = 5
     generate_ai_minute: int = 0
 
+
 class RedisSettings(BaseSettings):
     host: str = "localhost"
     port: int = 6379
     password: str = ""
     cache_db: int = 1
     chat_db: int = 2
+
 
 class GigaAiSettings(BaseSettings):
     base_url: str = "https://api.giga.chat/v1"
@@ -76,6 +81,7 @@ class GigaAiSettings(BaseSettings):
 
 class AppSettings(BaseSettings):
     """Класс с общими настройками"""
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

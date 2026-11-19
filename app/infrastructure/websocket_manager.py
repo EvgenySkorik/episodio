@@ -1,6 +1,11 @@
 # BETA
 from fastapi import WebSocket
+
+from app.core.logging import get_logger
 from app.infrastructure.redis_client import RedisChatClient
+
+logger = get_logger(__name__)
+
 
 class ConnectionManager:
     def __init__(self, redis_client: RedisChatClient) -> None:
@@ -18,7 +23,8 @@ class ConnectionManager:
         for connection in list(self.active_connections):
             try:
                 await connection.send_json(payload)
-            except Exception:
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"Ошибка отправки сообщения: {e}")
                 self.disconnect(connection)
 
     def disconnect(self, websocket: WebSocket) -> None:

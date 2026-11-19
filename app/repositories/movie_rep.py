@@ -1,18 +1,18 @@
 from collections.abc import Sequence
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import get_logger
-from app.db.models import Movie, UserMovie, MovieRatingStat
+from app.db.models import Movie, MovieRatingStat, UserMovie
 from app.repositories.bases.base_movie import BaseMovieRepository
 
 logger = get_logger(__name__)
 
 
 class MovieRepository(BaseMovieRepository):
-    """Репозиторий для работы БД и Видео """
+    """Репозиторий для работы БД и Видео"""
 
     def __init__(self, session: AsyncSession):
         self._session = session
@@ -33,7 +33,9 @@ class MovieRepository(BaseMovieRepository):
 
     async def get_by_name(self, movie_name: str) -> Movie | None:
         """Получить ORM-объект фильма по имени из БД."""
-        result = await self._session.execute(select(Movie).where(Movie.name.ilike(movie_name)))
+        result = await self._session.execute(
+            select(Movie).where(Movie.name.ilike(movie_name))
+        )
         movie = result.scalars().first()
         logger.info(f"Получен Movie name='{movie_name}' из БД")
         return movie
@@ -74,14 +76,14 @@ class MovieRepository(BaseMovieRepository):
     async def search_by_query(self, query: str, limit: int) -> Sequence[Movie]:
         """Получить список ORM-объектов фильмов по совпадению имени из БД с лимитом."""
         result = await self._session.execute(
-            select(Movie)
-            .where(Movie.name.ilike(f"%{query}%"))
-            .limit(limit)
+            select(Movie).where(Movie.name.ilike(f"%{query}%")).limit(limit)
         )
         logger.info(f"Получен список объектов по query={query}, limit={limit}")
         return result.scalars().all()
 
-    async def get_tracked_series(self) -> Sequence[tuple[int, int, int | None, int, str]]:
+    async def get_tracked_series(
+        self,
+    ) -> Sequence[tuple[int, int, int | None, int, str]]:
         """Получить все сериалы, которые отслеживают пользователи,
         Returns:
             - id (int): ID фильма в БД.
@@ -90,12 +92,19 @@ class MovieRepository(BaseMovieRepository):
             - user_id (int): ID пользователя, который отслеживает сериал.
             - name (str): Название сериала.
         """
-        stmt = (select(Movie.id, Movie.id_kino, Movie.total_episodes, UserMovie.user_id, Movie.name)
-                .join(UserMovie, UserMovie.movie_id == Movie.id)
-                .where(UserMovie.is_tracking == True)
-                .where(Movie.is_series == True)
-                .distinct()
-                )
+        stmt = (
+            select(
+                Movie.id,
+                Movie.id_kino,
+                Movie.total_episodes,
+                UserMovie.user_id,
+                Movie.name,
+            )
+            .join(UserMovie, UserMovie.movie_id == Movie.id)
+            .where(UserMovie.is_tracking == True)
+            .where(Movie.is_series == True)
+            .distinct()
+        )
         result = await self._session.execute(stmt)
         logger.info("Получен список объектов которые отслеживает пользователь")
         return result.all()  # type: ignore[return-value]
@@ -110,10 +119,7 @@ class MovieRepository(BaseMovieRepository):
             Sequence[Movie]: Список ORM-объектов для текущей страницы.
         """
         stmt = (
-            select(Movie)
-            .order_by(Movie.created_at.desc())
-            .limit(limit)
-            .offset(offset)
+            select(Movie).order_by(Movie.created_at.desc()).limit(limit).offset(offset)
         )
         result = await self._session.execute(stmt)
         logger.info("Получен список объектов с пагинацией")
@@ -155,15 +161,17 @@ class MovieRepository(BaseMovieRepository):
         await self._session.commit()
         logger.info(f"Увеличен счётчик высоких оценок для фильма {movie_id}")
 
-    async def get_top_rated(self, limit: int, offset: int = 0) -> Sequence[tuple[Movie, str | None]]:
+    async def get_top_rated(
+        self, limit: int, offset: int = 0
+    ) -> Sequence[tuple[Movie, str | None]]:
         """
-                Получить Топ по рейтингу фильмы/сериалы с пагинацией из связанной таблицы MovieRatingStat
-                Args:
-                    limit: Количество записей на странице (по умолчанию 20)
-                    offset:
-                Returns:
-                    Sequence[tuple[Movie, str | None]]: Кортеж из ORM-Movie и str-AI-description для текущей страницы.
-                """
+        Получить Топ по рейтингу фильмы/сериалы с пагинацией из связанной таблицы MovieRatingStat
+        Args:
+            limit: Количество записей на странице (по умолчанию 20)
+            offset:
+        Returns:
+            Sequence[tuple[Movie, str | None]]: Кортеж из ORM-Movie и str-AI-description для текущей страницы.
+        """
         stmt = (
             select(Movie, MovieRatingStat.ai_description)
             .join(MovieRatingStat, MovieRatingStat.movie_id == Movie.id)

@@ -1,7 +1,7 @@
 import base64
-import time
 import hashlib
 import hmac
+import time
 from collections import OrderedDict
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -17,13 +17,14 @@ from app.core.exceptions.exceptions import (
     LogFileNotFoundError,
     LogFileReadError,
     SecurityError,
-    TokenExpiredError, UserNotFoundError,
+    TokenExpiredError,
 )
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 MAX_LAUNCH_PARAMS_AGE_SECONDS = 3600
+
 
 def verify_vk_sign(params: dict, secret: str) -> int:
     """
@@ -42,12 +43,10 @@ def verify_vk_sign(params: dict, secret: str) -> int:
     query_string = urlencode(sorted_params, doseq=True)
 
     hmac_hash = hmac.new(
-        secret.encode(),
-        query_string.encode(),
-        hashlib.sha256
+        secret.encode(), query_string.encode(), hashlib.sha256
     ).digest()
 
-    expected_sign = base64.urlsafe_b64encode(hmac_hash).decode().rstrip('=')
+    expected_sign = base64.urlsafe_b64encode(hmac_hash).decode().rstrip("=")
 
     sign = params.get("sign")
     if not sign:
@@ -68,7 +67,6 @@ def verify_vk_sign(params: dict, secret: str) -> int:
         raise SecurityError("VK launch params expired")
 
     return int(params["vk_user_id"])
-
 
 
 def create_jwt(vk_id: int) -> str:
@@ -93,6 +91,7 @@ def decode_jwt(token: str) -> int:
         raise InvalidTokenError("Missing vk_id in token")
     return int(vk_id)
 
+
 def get_current_user_impl(token: str) -> int:
     """Проверяет JWT и возвращает vk_id."""
     try:
@@ -101,6 +100,7 @@ def get_current_user_impl(token: str) -> int:
         raise TokenExpiredError()
     except jwt.InvalidTokenError:
         raise InvalidTokenError()
+
 
 def verify_admin_password(password: str) -> bool:
     """Проверка админского пароля"""
@@ -115,7 +115,7 @@ async def read_log_file() -> str:
         raise LogFileNotFoundError(f"Файл логов не найден: {log_path}")
 
     try:
-        async with aiofiles.open(log_path, 'r', encoding='utf-8') as f:
+        async with aiofiles.open(log_path, "r", encoding="utf-8") as f:
             content: str = await f.read()
             return content
 
@@ -131,8 +131,8 @@ async def read_log_lines(n: int = 50) -> str:
     """Читает последние N строк логов"""
     try:
         logs = await read_log_file()
-        lines = logs.split('\n')
-        return '\n'.join(lines[-n:])
+        lines = logs.split("\n")
+        return "\n".join(lines[-n:])
     except LogFileNotFoundError:
         raise
     except OSError as e:

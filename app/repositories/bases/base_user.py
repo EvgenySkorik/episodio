@@ -36,7 +36,9 @@ class BaseUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_movies_with_user_rating(self, vk_id: int) -> Sequence[tuple[Movie, UserMovie]]:
+    async def get_movies_with_user_rating(
+        self, vk_id: int
+    ) -> Sequence[tuple[Movie, UserMovie]]:
         pass
 
     @abstractmethod
@@ -48,14 +50,11 @@ class BaseUserRepository(ABC):
         pass
 
     @abstractmethod
-    async def toggle_tracking(self, user_id: int, movie_id: int, is_tracking: bool) -> bool:
+    async def toggle_tracking(
+        self, user_id: int, movie_id: int, is_tracking: bool
+    ) -> bool:
         pass
 
     @abstractmethod
     async def get_user_movie(self, user_id: int, movie_id: int) -> UserMovie | None:
         pass
-
-
-
-
-

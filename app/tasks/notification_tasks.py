@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 def send_notification_series(self: Any, user_id: int) -> None:
     """Celery задача для отправки уведомлений о новых сериях."""
     logger.info("Запуск задачи send_notification_series")
+
     async def _run():
         async with create_container() as c:
             await c.notification_service.send_notification(
@@ -30,6 +31,6 @@ def send_notification_series(self: Any, user_id: int) -> None:
     try:
         loop.run_until_complete(_run())
         logger.info("Задача send_notification_series завершена успешно")
-    except Exception as exc: # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
         logger.error(f"Ошибка: {exc}")
         raise self.retry(exc=exc)

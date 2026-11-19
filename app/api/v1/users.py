@@ -10,7 +10,13 @@ from app.schemas.user_schemas import UserCreate, UserResponse, UserUpdate
 
 users_rout = APIRouter(prefix="/users", tags=["users"])
 
-@users_rout.post("/", summary='Создать пользователя', response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+
+@users_rout.post(
+    "/",
+    summary="Создать пользователя",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_user(
     user_data: UserCreate,
     service: ServiceUserDep,
@@ -18,17 +24,25 @@ async def create_user(
     """Создание пользователя"""
     return await service.create_user(user_data)
 
-@users_rout.get("/me", summary='Получить текущего пользователя по VK ID', response_model=UserResponse)
+
+@users_rout.get(
+    "/me",
+    summary="Получить текущего пользователя по VK ID",
+    response_model=UserResponse,
+)
 async def get_me(
     service: ServiceUserDep,
     vk_id: CurrentUserVkIdDep,
-
 ):
     """Получение текущего пользователя"""
     return await service.get_or_create_user(vk_id)
 
 
-@users_rout.get("/me/movies", summary='Получить фильмы пользователя по VK ID', response_model=list[MovieWithUserRatingResponse])
+@users_rout.get(
+    "/me/movies",
+    summary="Получить фильмы пользователя по VK ID",
+    response_model=list[MovieWithUserRatingResponse],
+)
 async def get_my_movies(
     vk_id: CurrentUserVkIdDep,
     service: ServiceUserDep,
@@ -37,17 +51,23 @@ async def get_my_movies(
     return await service.get_user_movies_with_rating(vk_id)
 
 
-@users_rout.post("/me/movies/{movie_id}", summary='Добавить фильм в коллекцию', status_code=status.HTTP_201_CREATED)
+@users_rout.post(
+    "/me/movies/{movie_id}",
+    summary="Добавить фильм в коллекцию",
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_movie_to_collection(
     service: ServiceUserDep,
     vk_id: CurrentUserVkIdDep,
     movie_id: int,
-
 ):
     """Добавление фильма/сериала в коллекцию"""
     return await service.add_movie_to_collection(vk_id, movie_id)
 
-@users_rout.delete("/me/movies/{movie_id}", summary='Удалить фильм из коллекции', status_code=204)
+
+@users_rout.delete(
+    "/me/movies/{movie_id}", summary="Удалить фильм из коллекции", status_code=204
+)
 async def delete_movie_from_collection(
     vk_id: CurrentUserVkIdDep,
     movie_id: int,
@@ -56,7 +76,8 @@ async def delete_movie_from_collection(
     """Удаление фильма/сериала в коллекцию"""
     await service.delete_movie_from_collection(vk_id, movie_id)
 
-@users_rout.put("/me/movies/{movie_id}/rating", summary='Оценить фильм')
+
+@users_rout.put("/me/movies/{movie_id}/rating", summary="Оценить фильм")
 async def rate_movie(
     vk_id: CurrentUserVkIdDep,
     movie_id: int,
@@ -66,7 +87,8 @@ async def rate_movie(
     """Оценить фильм/сериал"""
     return await service.rate_movie(vk_id, movie_id, rating_data.rating)
 
-@users_rout.put("/me/movies/{movie_id}/track", summary='Отслеживание сериала')
+
+@users_rout.put("/me/movies/{movie_id}/track", summary="Отслеживание сериала")
 async def toggle_tracking(
     vk_id: CurrentUserVkIdDep,
     movie_id: int,
@@ -76,7 +98,8 @@ async def toggle_tracking(
     """Отслеживание сериала"""
     return await service.toggle_movie_tracking(vk_id, movie_id, track_data.is_tracking)
 
-@users_rout.get("/{user_id}", summary='Получить по ID', response_model=UserResponse)
+
+@users_rout.get("/{user_id}", summary="Получить по ID", response_model=UserResponse)
 async def get_user(
     user_id: int,
     service: ServiceUserDep,
@@ -85,7 +108,9 @@ async def get_user(
     return await service.get_user_by_id(user_id)
 
 
-@users_rout.put("/{user_id}", summary='Обновить пользователя', response_model=UserResponse)
+@users_rout.put(
+    "/{user_id}", summary="Обновить пользователя", response_model=UserResponse
+)
 async def update_user(
     user_id: int,
     user_data: UserUpdate,
@@ -94,11 +119,13 @@ async def update_user(
     """Обновить пользователя по ID"""
     return await service.update_user(user_id, user_data)
 
-@users_rout.delete("/{user_id}", summary='Удалить пользователя', status_code=status.HTTP_204_NO_CONTENT)
+
+@users_rout.delete(
+    "/{user_id}", summary="Удалить пользователя", status_code=status.HTTP_204_NO_CONTENT
+)
 async def delete_user(
     user_id: int,
     service: ServiceUserDep,
 ):
     """Удалить пользователя по ID"""
     await service.delete_user(user_id)
-

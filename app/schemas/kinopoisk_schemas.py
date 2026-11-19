@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel
 
 
@@ -17,4 +16,3 @@ class KinopoiskMovieResponse(BaseModel):
     countries: list | None
     logo: str | None
     poster: str | None
-
