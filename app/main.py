@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.redis_client = get_redis_client()
     app.state.redis_chat_client = RedisChatClient()
     app.state.giga_client = get_giga_client()
-    await create_tables()
+    # await create_tables()
     yield
     await app.state.http_client.close()
     await app.state.redis_client.close()
