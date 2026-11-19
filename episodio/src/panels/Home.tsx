@@ -1,5 +1,5 @@
 import {useState, useEffect, useRef} from 'react';
-import {Search, Bookmark, Star, Tv, Plus, Trophy, MessageCircle} from 'lucide-react';
+import {Search, Bookmark, Star, Tv, Plus, Trophy, MessageCircle, Shield} from 'lucide-react';
 import {Card, CardContent} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
@@ -21,9 +21,11 @@ interface HomeProps {
     vkId: number;
     openTop?: () => void;
     openChat?: () => void;
+    openAdmin?: () => void;
+    isAdmin?: boolean;
 }
 
-const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop, openChat}) => {
+const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop, openChat, openAdmin, isAdmin}) => {
     const [movies, setMovies] = useState<MovieWithUserRating[]>([]);
     const [query, setQuery] = useState('');
     const [loading, setLoading] = useState(true);
@@ -155,7 +157,18 @@ const Home: React.FC<HomeProps> = ({id, openMovie, vkId, openTop, openChat}) => 
             {/* Заголовок */}
             <div className="flex items-center gap-3">
                 <Tv className="w-8 h-8 text-red-600"/>
-                <h1 className="text-2xl font-bold tracking-tight">Episodio</h1>
+                <h1 className="text-2xl font-bold tracking-tight flex-1">Episodio</h1>
+                {isAdmin && openAdmin && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={openAdmin}
+                        aria-label="Админка"
+                        className="text-gray-400 hover:text-white"
+                    >
+                        <Shield className="w-5 h-5"/>
+                    </Button>
+                )}
             </div>
 
             {/* Навигация: Моя коллекция / Популярное */}

@@ -15,7 +15,7 @@ from app.api.v1.users import users_rout
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.database import create_tables
-from app.factories import get_hawk_client, get_http_client, get_redis_client
+from app.factories import get_hawk_client, get_http_client, get_redis_client, get_giga_client
 from app.infrastructure.redis_client import RedisChatClient
 
 
@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.hawk_client = get_hawk_client()
     app.state.redis_client = get_redis_client()
     app.state.redis_chat_client = RedisChatClient()
+    app.state.giga_client = get_giga_client()
     await create_tables()
     yield
     await app.state.http_client.close()

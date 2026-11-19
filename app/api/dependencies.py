@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.paginations import PaginationParams
 from app.clients.kp_client import KinopoiskClient
+from app.clients.sber_ai_client import GigaAiClient
 from app.clients.vk_client import VkClient
 from app.core.config import settings
 from app.core.exceptions.exceptions import SecurityError
@@ -13,9 +14,10 @@ from app.db.database import get_db
 from app.infrastructure.hawk_client import HawkClient
 from app.infrastructure.http_client import HTTPClient
 from app.infrastructure.redis_client import RedisCacheClient
-from app.infrastructure.security import get_current_user_impl, verify_vk_sign
+from app.infrastructure.security import get_current_user_impl, verify_vk_sign, get_admin_vk_id
 from app.repositories.movie_rep import MovieRepository
 from app.repositories.user_rep import UserRepository
+from app.services.ai import AiService
 from app.services.movie import MovieService
 from app.services.notification import NotificationService
 from app.services.user import UserService
@@ -28,13 +30,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/vk")
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> int:
     return get_current_user_impl(token)
 
-
-
 async def get_vk_user_id(request: Request) -> int:
     try:
         return verify_vk_sign(dict(request.query_params), settings.vk.secret_key)
     except SecurityError as e:
         raise HTTPException(status_code=403, detail=str(e))
+
+async def get_admin(
+        vk_id: Annotated[int, Depends(get_current_user)],
+) -> int:
+    return get_admin_vk_id(vk_id)
 
 # ---------------------------------------------------------------------------
 # -----------------------------Репозитории-----------------------------------
@@ -78,6 +83,9 @@ async def get_redis_client(request: Request) -> RedisCacheClient:
     """Возвращает Redis-клиент из состояния приложения (синглтон)."""
     return request.app.state.redis_client # type: ignore[no-any-return]
 
+async def get_giga_client(request: Request) -> GigaAiClient:
+    """Возвращает GigaAiClient из состояния приложения (синглтон)."""
+    return request.app.state.giga_client # type: ignore[no-any-return]
 
 # ---------------------------------------------------------------------------
 # -----------------------------Сервисы---------------------------------------
@@ -97,6 +105,10 @@ async def get_notification_service(
         hawk=hawk_client,
     )
 
+async def get_ai_service(
+    giga_client: Annotated[GigaAiClient, Depends(get_giga_client)],
+) -> AiService:
+    return AiService(client=giga_client)
 
 async def get_movie_service(
         movie_repo: Annotated[MovieRepository, Depends(get_movie_repository)],
@@ -104,6 +116,7 @@ async def get_movie_service(
         notify_service: Annotated[NotificationService, Depends(get_notification_service)],
         hawk_client: Annotated[HawkClient, Depends(get_hawk_client)],
         redis_client: Annotated[RedisCacheClient, Depends(get_redis_client)],
+        ai_service: Annotated[AiService, Depends(get_ai_service)],
 ) -> MovieService:
     return MovieService(
         repository=movie_repo,
@@ -111,6 +124,7 @@ async def get_movie_service(
         notification_service=notify_service,
         hawk=hawk_client,
         cached_client=redis_client,
+        ai_service=ai_service,
     )
 
 
@@ -128,8 +142,11 @@ async def get_user_service(
 
 type ServiceMovieDep = Annotated[MovieService, Depends(get_movie_service)]
 type ServiceUserDep = Annotated[UserService, Depends(get_user_service)]
+type ServiceAiDep = Annotated[AiService, Depends(get_ai_service)]
+
 type VkUserIdDep = Annotated[int, Depends(get_vk_user_id)]
 type CurrentUserVkIdDep = Annotated[int, Depends(get_current_user)]
+type AdminVkIdDep = Annotated[int, Depends(get_admin)]
 
 type PaginationDep = Annotated[PaginationParams, Depends()]
 

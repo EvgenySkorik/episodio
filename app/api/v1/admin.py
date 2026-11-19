@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from app.api.dependencies import ServiceAiDep, AdminVkIdDep
 from app.core.config import settings
 from app.core.exceptions.exceptions import TestError
 from app.core.logging import get_logger
@@ -16,29 +17,31 @@ logger = get_logger(__name__)
 admin_rout = APIRouter(prefix="/admin", tags=["admin"])
 
 
-if settings.environment == "development":
-    @admin_rout.get("/trigger-error")
-    async def trigger_error():
-        """
-           Тестовый эндпоинт для проверки Hawk.
-           Вызывает исключение, которое должно быть отправлено в Hawk.
-           """
-        logger.warning("Вызван тестовый эндпоинт /trigger-error")
-        raise TestError("Тестовая ошибка для Hawk!")
+@admin_rout.get("/check", summary="Проверка, что пользователь — админ")
+async def check_admin(
+    _vk_id: AdminVkIdDep,
+) -> dict[str, bool]:
+    """Возвращает is_admin=True, если vk_id в whitelist (иначе 403)."""
+    return {"is_admin": True}
+
+
+@admin_rout.post("/login", summary="Вход в админку")
+async def admin_login(
+    password: UserLoginPass,
+    _vk_id: AdminVkIdDep,
+) -> dict[str, bool]:
+    """Проверяет пароль. vk_id уже проверен через AdminVkIdDep."""
+    if not verify_admin_password(password.password):
+        raise HTTPException(403, "Неверный пароль")
+    return {"ok": True}
 
 @admin_rout.post("/logs", summary="Получить логи")
 async def get_logs(
-        request: Request,
-        password: UserLoginPass,
+    _vk_id: AdminVkIdDep,
 ) -> JSONResponse:
     """
         Получить содержимое файла логов.
     """
-    if not verify_admin_password(password.password):
-        client_ip = request.client.host if request.client else "unknown"
-        logger.warning(f"Неудачная попытка доступа к логам с IP: {client_ip}")
-        raise HTTPException(status_code=403, detail="Неверный пароль")
-
     logs = await read_log_file()
 
     return JSONResponse(
@@ -52,16 +55,10 @@ async def get_logs(
 
 @admin_rout.post("/logs/latest", summary="Получить последние N логи")
 async def get_latest_logs(
-        request: Request,
-        password: UserLoginPass,
-        lines: int = 50,
+    _vk_id: AdminVkIdDep,
+    lines: int = 50,
 ) -> JSONResponse:
     """Получить последние N строк логов"""
-    if not verify_admin_password(password.password):
-        client_ip = request.client.host if request.client else "unknown"
-        logger.warning(f"Неудачная попытка доступа к логам с IP: {client_ip}")
-        raise HTTPException(status_code=403, detail="Неверный пароль")
-
     logs = await read_log_lines(lines)
 
     return JSONResponse(
@@ -72,4 +69,17 @@ async def get_latest_logs(
         }
     )
 
+@admin_rout.post("/ai-balance", summary="Баланс GigaChat")
+async def ai_balance(
+    _vk_id: AdminVkIdDep,
+    ai_service: ServiceAiDep,
+):
+    return await ai_service._client.balance()
+
+@admin_rout.post("/ai-models", summary="Модели для GigaChat")
+async def ai_models(
+    _vk_id: AdminVkIdDep,
+    ai_service: ServiceAiDep,
+):
+    return await ai_service._client.models()
 

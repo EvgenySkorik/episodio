@@ -11,14 +11,14 @@ interface TopMoviesProps {
 }
 
 const PAGE_SIZE = 20;
-const DESCRIPTION_MAX_LENGTH = 200;
+const FALLBACK_MAX_LENGTH = 200;
 
-const truncate = (text: string, max = DESCRIPTION_MAX_LENGTH): string =>
+const truncate = (text: string, max = FALLBACK_MAX_LENGTH): string =>
     text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
 
 /** Описание: сначала AI-описание, иначе короткое/полное (обрезанное). */
 const getDescription = (movie: MovieTopResponse): string | null => {
-    if (movie.ai_description) return truncate(movie.ai_description);
+    if (movie.ai_description) return movie.ai_description;
     if (movie.short_description) return truncate(movie.short_description);
     if (movie.description) return truncate(movie.description);
     return null;
@@ -156,7 +156,7 @@ const TopMovies: React.FC<TopMoviesProps> = ({id, openMovie, goHome}) => {
                                             IMDb: {movie.rating_imdb ?? '—'}
                                         </p>
                                         {description && (
-                                            <p className="text-xs text-gray-400 line-clamp-4 pt-1">
+                                            <p className="text-xs text-gray-400 line-clamp-8 pt-1">
                                                 {description}
                                             </p>
                                         )}

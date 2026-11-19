@@ -28,6 +28,13 @@ celery_app.conf.beat_schedule = {
             minute=settings.celery.check_series_minute,
             day_of_week=f'*/{settings.celery.check_series_day}'),
     },
+    'update-top-movies': {
+        'task': 'generate_missing_ai_descriptions',
+        'schedule': crontab(
+            hour=settings.celery.generate_ai_hour,
+            minute=settings.celery.generate_ai_minute,
+            day_of_week=f'*/{settings.celery.check_series_day}'),
+    },
 
     # 'send-test-notification': {
     #     'task': 'send_notification_series',

@@ -38,3 +38,6 @@ class LogFileReadError(FileOperationError):
 
 class TestError(AppError):
     """Ошибка для теста Hawk"""
+
+class GigaChatError(AppError):
+    """Ошибка при запросе к GigaChat API."""

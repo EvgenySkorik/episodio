@@ -37,9 +37,13 @@ export interface TopMoviesParams {
     limit?: number;
 }
 
-const getHeaders = (): HeadersInit => {
+const getHeaders = (): Record<string, string> => {
     const token = localStorage.getItem('jwt');
-    return token ? {'Authorization': `Bearer ${token}`} : {};
+    const headers: Record<string, string> = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
 };
 
 const authJsonHeaders = (): HeadersInit => ({
@@ -127,4 +131,87 @@ export const toggleTracking = async (movieId: number, isTracking: boolean) => {
         body: JSON.stringify({is_tracking: isTracking}),
     });
     return handleResponse(res);
+};
+
+const handleAdminResponse = async (res: Response) => {
+    if (res.status === 401) {
+        throw new Error('UNAUTHORIZED');
+    }
+    if (res.status === 403) {
+        throw new Error('FORBIDDEN');
+    }
+    if (!res.ok) {
+        let detail = 'Ошибка';
+        try {
+            const data = await res.json();
+            if (data?.detail) detail = String(data.detail);
+        } catch {
+            /* тело может отсутствовать */
+        }
+        throw new Error(detail);
+    }
+    if (res.status === 204) return null;
+    return res.json();
+};
+
+/** Проверяет, что текущий пользователь — админ. Возвращает true/false. */
+export const checkAdmin = async (): Promise<boolean> => {
+    try {
+        const res = await fetch('/admin/check', {headers: getHeaders()});
+        await handleAdminResponse(res);
+        return true;
+    } catch (e) {
+        if (e instanceof Error && (e.message === 'UNAUTHORIZED' || e.message === 'FORBIDDEN')) {
+            return false;
+        }
+        console.error('checkAdmin error:', e);
+        return false;
+    }
+};
+
+/** Вход в админку по паролю. Возвращает true/false. */
+export const adminLogin = async (password: string): Promise<boolean> => {
+    try {
+        const res = await fetch('/admin/login', {
+            method: 'POST',
+            headers: authJsonHeaders(),
+            body: JSON.stringify({password}),
+        });
+        await handleAdminResponse(res);
+        return true;
+    } catch (e) {
+        if (e instanceof Error && e.message === 'FORBIDDEN') {
+            return false;  // неверный пароль
+        }
+        console.error('adminLogin error:', e);
+        return false;
+    }
+};
+
+/** Получить последние N строк логов. */
+export const getLogsLatest = async (lines = 50): Promise<string> => {
+    const res = await fetch(`/admin/logs/latest?lines=${lines}`, {
+        method: 'POST',
+        headers: getHeaders(),
+    });
+    const data = await handleAdminResponse(res);
+    return data?.logs ?? '';
+};
+
+/** Баланс GigaChat: список [model, balance]. */
+export const getAiBalance = async (): Promise<[string, number][]> => {
+    const res = await fetch('/admin/ai-balance', {
+        method: 'POST',
+        headers: getHeaders(),
+    });
+    return handleAdminResponse(res);
+};
+
+/** Список моделей GigaChat. */
+export const getAiModels = async (): Promise<string[]> => {
+    const res = await fetch('/admin/ai-models', {
+        method: 'POST',
+        headers: getHeaders(),
+    });
+    return handleAdminResponse(res);
 };

@@ -1,9 +1,6 @@
 # Python
 __pycache__/
 *.py[oc]
-build/
-dist/
-wheels/
 *.egg-info
 .venv/
 env/
@@ -23,12 +20,38 @@ docker-compose.override.yaml
 KinoMovieApi.log
 CeleryWorker.log
 
+# Celery
+celerybeat-schedule
+celerybeat-schedule.*
+
+# Тесты / линтеры
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
 # Фронт
 episodio/node_modules/
 episodio/dist/
+episodio/build/
+episodio/.env.local
+episodio/.env.*.local
+
+# Артефакты сборки Python
+build/
+dist/
+wheels/
+
+# Патчи
 patch/
+
+# Статика (пользовательские файлы)
+static/uploads/
 
 # OS
 .DS_Store
 Thumbs.db
-EOF
+
+# Локальные БД
+*.sqlite
+*.sqlite3
+*.db

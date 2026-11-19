@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 from app.clients.kp_client import KinopoiskClient
+from app.clients.sber_ai_client import GigaAiClient
 from app.clients.vk_client import VkClient
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -15,6 +16,7 @@ from app.infrastructure.http_client import HTTPClient
 from app.infrastructure.redis_client import RedisCacheClient
 from app.repositories.movie_rep import MovieRepository
 from app.repositories.user_rep import UserRepository
+from app.services.ai import AiService
 from app.services.movie import MovieService
 from app.services.notification import NotificationService
 from app.services.user import UserService
@@ -24,6 +26,7 @@ logger = get_logger(__name__)
 _http_client: HTTPClient | None = None
 _hawk_client: HawkClient | None = None
 _redis_client: RedisCacheClient | None = None
+_giga_client: GigaAiClient | None = None
 
 
 def get_http_client() -> HTTPClient:
@@ -50,12 +53,21 @@ def get_redis_client() -> RedisCacheClient:
     return _redis_client
 
 
+def get_giga_client() -> GigaAiClient:
+    global _giga_client
+    if _giga_client is None:
+        _giga_client = GigaAiClient(settings)
+        logger.info("Возвращаем giga_client")
+    return _giga_client
+
+
 @dataclass(slots=True)
 class Container:
     """Контейнер всех сервисов приложения."""
     movie_service: MovieService
     user_service: UserService
     notification_service: NotificationService
+    ai_service: AiService
 
 
 @asynccontextmanager
@@ -67,6 +79,7 @@ async def create_container() -> AsyncIterator[Container]:
     http_client = get_http_client()
     hawk_client = get_hawk_client()
     redis_client = get_redis_client()
+    giga_client = get_giga_client()
 
     try:
         movie_repository = MovieRepository(session=session)
@@ -82,10 +95,15 @@ async def create_container() -> AsyncIterator[Container]:
             hawk=hawk_client,
         )
 
+        ai_service = AiService(
+            client=giga_client,
+        )
+
         movie_service = MovieService(
             repository=movie_repository,
             kinopoisk_client=kino_client,
             notification_service=notification_service,
+            ai_service=ai_service,
             hawk=hawk_client,
             cached_client=redis_client,
         )
@@ -100,6 +118,7 @@ async def create_container() -> AsyncIterator[Container]:
             movie_service=movie_service,
             user_service=user_service,
             notification_service=notification_service,
+            ai_service=ai_service,
         )
 
     finally:

@@ -1,4 +1,5 @@
 import base64
+import time
 import hashlib
 import hmac
 from collections import OrderedDict
@@ -8,6 +9,7 @@ from urllib.parse import urlencode
 
 import aiofiles
 import jwt
+from fastapi import HTTPException
 
 from app.core.config import settings
 from app.core.exceptions.exceptions import (
@@ -15,12 +17,13 @@ from app.core.exceptions.exceptions import (
     LogFileNotFoundError,
     LogFileReadError,
     SecurityError,
-    TokenExpiredError,
+    TokenExpiredError, UserNotFoundError,
 )
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+MAX_LAUNCH_PARAMS_AGE_SECONDS = 3600
 
 def verify_vk_sign(params: dict, secret: str) -> int:
     """
@@ -53,7 +56,19 @@ def verify_vk_sign(params: dict, secret: str) -> int:
     if not hmac.compare_digest(sign, expected_sign):
         raise SecurityError("Invalid VK sign")
 
+    vk_ts = params.get("vk_ts")
+    if vk_ts is None:
+        raise SecurityError("Missing vk_ts")
+    try:
+        ts = int(vk_ts)
+    except (TypeError, ValueError):
+        raise SecurityError("Invalid vk_ts")
+
+    if abs(time.time() - ts) > MAX_LAUNCH_PARAMS_AGE_SECONDS:
+        raise SecurityError("VK launch params expired")
+
     return int(params["vk_user_id"])
+
 
 
 def create_jwt(vk_id: int) -> str:
@@ -123,3 +138,10 @@ async def read_log_lines(n: int = 50) -> str:
     except OSError as e:
         logger.error(f"Ошибка чтения логов: {e}")
         raise LogFileReadError(f"Ошибка при чтении последних {n} строк: {e!s}")
+
+
+def get_admin_vk_id(vk_id: int) -> int:
+    """Проверяет, что vk_id из JWT входит в whitelist админов."""
+    if vk_id not in settings.admin_vk_ids:
+        raise HTTPException(status_code=403, detail="Not an admin")
+    return vk_id
