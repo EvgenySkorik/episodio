@@ -6,12 +6,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates curl && \
-    curl -k "https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt" -w "\n" >> $(python -m certifi) && \
+    update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml uv.lock ./
 
 RUN uv sync --frozen --no-dev
+
+RUN curl -k "https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt" -w "\n" >> $(uv run python -m certifi)
 
 COPY . .
 
