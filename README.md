@@ -52,8 +52,9 @@
 | Celery + Redis | Lucide Icons | Ubuntu VPS | pytest |
 | SQLAlchemy | Vite | Prometheus + Grafana | |
 | Pydantic | VK Bridge | Hawk | |
-| Python 3.12 | | Celery Beat | |
-| GigaChat SDK | | | |
+| Python 3.12 | WebSocket API | Celery Beat | |
+| GigaChat SDK | | Alembic | |
+| WebSocket (FastAPI) | | Redis (cache + broker + chat) | |
 
 ## Архитектура
 
