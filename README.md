@@ -13,11 +13,7 @@
 </div>
 
 ## <img src="episodio/logo_episodio.jpg" width="35" align="absmiddle" /> **Демо:** [vk.ru/app54667446](https://vk.ru/app54667446)
-![Профиль](episodio/src_3.jpg)
-![Главная](episodio/src4.jpg)
-![Админка](episodio/src5.jpg)
-![Топ](episodio/src6.jpg)
-![Чат](episodio/src7.jpg)
+
 
 **Episodio** — это VK Mini App для отслеживания любимых фильмов и сериалов на разных платформах (Netflix, YouTube, Кинопоиск и др.). Больше не забудешь, на какой серии остановился!
 
