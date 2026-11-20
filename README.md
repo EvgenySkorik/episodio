@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=rect&color=gradient&customColorList=6,11,20&height=180&section=header&text=EPISODIO&fontSize=60&fontColor=fff&animation=twinkling&fontAlignY=35&desc=Трекер%20сериалов%20и%20фильмов&descAlignY=60&descSize=18" width="100%"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:000000,100:E50914&height=180&section=header&text=EPISODIO&fontSize=60&fontColor=fff&animation=twinkling&fontAlignY=35&desc=Трекер%20сериалов%20и%20фильмов&descAlignY=60&descSize=18" width="100%"/>
 
 <a href="https://git.io/typing-svg">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&pause=1000&color=E50914&center=true&vCenter=true&width=600&lines=FastAPI+%7C+React+%7C+PostgreSQL;AI-%D0%BE%D0%BF%D0%B8%D1%81%D0%B0%D0%BD%D0%B8%D1%8F+%D1%81+%D1%8E%D0%BC%D0%BE%D1%80%D0%BE%D0%BC+%D0%BE%D1%82+GigaChat;VK+Mini+App+%7C+Celery+%7C+Redis;%D0%A7%D0%B8%D1%81%D1%82%D0%B0%D1%8F+%D0%B0%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0+%D0%B8+%D1%82%D0%B5%D1%81%D1%82%D1%8B" alt="Typing SVG" />
@@ -11,6 +11,8 @@
 <img src="https://komarev.com/ghpvc/?username=EvgenySkorik&label=Profile%20views&color=E50914&style=flat-square" alt="Profile views" />
 
 </div>
+
+## <img src="images/stack.png" width="35" align="absmiddle" /> Стек
 
 **Episodio** — это VK Mini App для отслеживания любимых фильмов и сериалов на разных платформах (Netflix, YouTube, Кинопоиск и др.). Больше не забудешь, на какой серии остановился!
 
