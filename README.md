@@ -8,11 +8,12 @@
 
 <br/>
 
-<img src="https://komarev.com/ghpvc/?username=EvgenySkorik&label=Profile%20views&color=E50914&style=flat-square" alt="Profile views" />
+<img src="https://komarev.com/ghpvc/?username=EvgenySkorik&label=EPISODIO%20VIEWS&color=E50914&style=flat-square&base=104" alt="Episodio views" />
 
 </div>
 
-## <img src="images/stack.png" width="35" align="absmiddle" /> Стек
+## <img src="episodio/logo_episodio.jpg" width="35" align="absmiddle" /> **Демо:** [vk.ru/app54667446](https://vk.ru/app54667446)
+
 
 **Episodio** — это VK Mini App для отслеживания любимых фильмов и сериалов на разных платформах (Netflix, YouTube, Кинопоиск и др.). Больше не забудешь, на какой серии остановился!
 
